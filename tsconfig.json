@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        //"baseUrl": "./src2",
+        "sourceMap": false,
+        "module": "es6",
+        "target": "es6",
+        "jsx": "preserve",
+        "lib": [
+            "dom",
+            "es6"
+        ],
+        "outDir": "js/",
+        "allowSyntheticDefaultImports": true,
+        "moduleResolution": "node",
+        "strictNullChecks": true
+    },
+    "files": [
+        "sauce/Grav.d.ts"
+    ],
+    "include": [
+        "sauce",
+        "util"
+    ],
+    "exclude": [
+        "node_modules",
+        "**/node_modules/*"
+    ]
+}
