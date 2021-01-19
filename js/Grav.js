@@ -47,6 +47,7 @@ export var GRAV;
     function init() {
         console.log('grav init');
         GRAV.wlrd = Grav.World.make();
+        GRAV.wlrd.init();
         resourced('RC_UNDEFINED');
         resourced('POPULAR_ASSETS');
         resourced('READY');

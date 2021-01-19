@@ -51,6 +51,7 @@ export namespace GRAV {
 	export function init() {
 		console.log('grav init');
 		wlrd = Grav.World.make();
+		wlrd.init();
 
 		resourced('RC_UNDEFINED');
 		resourced('POPULAR_ASSETS');
