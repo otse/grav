@@ -1,3 +1,10 @@
-export namespace TestingChamber {
+namespace TestingChamber {
+	export function Adept()
+	{
+		console.log('start testing chamber');
 
+		
+	}
 }
+
+export default TestingChamber;

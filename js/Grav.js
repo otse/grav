@@ -1,7 +1,5 @@
-//import World from "./lod/World";
-//import Obj from "./objrekt/Obj";
-//import { Board } from "./nested/Board";
-//import { Ploppables } from "./lod/Ploppables";
+import Grav from "./Code";
+import TestingChamber from "./TestingChamber";
 export var GRAV;
 (function (GRAV) {
     GRAV.NO_VAR = false;
@@ -9,8 +7,6 @@ export var GRAV;
     GRAV.EVEN = 24; // very evenly divisible
     GRAV.HALVE = GRAV.EVEN / 2;
     GRAV.YUM = GRAV.EVEN;
-    //export var wlrd: World;
-    //export var ply: Obj;
     var started = false;
     function sample(a) {
         return a[Math.floor(Math.random() * a.length)];
@@ -38,7 +34,8 @@ export var GRAV;
         let count = 0;
         let i = 0;
         for (; i < RESOURCES.COUNT; i++)
-            (resources_loaded & 0b1 << i) ? count++ : void (0);
+            if (resources_loaded & 0b1 << i)
+                count++;
         if (count == RESOURCES.COUNT)
             start();
     }
@@ -49,7 +46,7 @@ export var GRAV;
     GRAV.critical = critical;
     function init() {
         console.log('grav init');
-        //wlrd = World.rig();
+        GRAV.wlrd = Grav.World.make();
         resourced('RC_UNDEFINED');
         resourced('POPULAR_ASSETS');
         resourced('READY');
@@ -60,6 +57,8 @@ export var GRAV;
         if (started)
             return;
         console.log('grav start');
+        if (window.location.href.indexOf("#testingchamber") != -1)
+            TestingChamber.Adept();
         if (window.location.href.indexOf("#novar") != -1)
             GRAV.NO_VAR = false;
         //wlrd.populate();
@@ -69,7 +68,7 @@ export var GRAV;
     function update() {
         if (!started)
             return;
-        //wlrd.update();
+        GRAV.wlrd.update();
         //Board.update();
         //Ploppables.update();
     }

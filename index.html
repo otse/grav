@@ -41,12 +41,38 @@
 			position: absolute;
 			image-rendering: pixelated;
 		}
+
+		#win {
+			position: absolute;
+			display: block;
+			z-index: 9;
+			box-sizing: border-box;
+			padding: 20px;
+			font-size: 20px;
+			color: #ffff5c;
+			font-family: sans-serif;
+		}
+
+		.stats {
+			z-index: 2;
+			width: 300px;
+			position: absolute;
+			top: 0;
+			right: 0;
+			font-family: monospace;
+			font-size: 11px;
+			text-align: right;
+			padding: 5px;
+			color: white;
+			background: transparent !important;
+		}
 	</style>
 
 </head>
 
 <body>
 	<div id="win"></div>
+	<div class="stats"></div>
 
 </body>
 

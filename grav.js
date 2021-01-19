@@ -5,82 +5,72 @@ var Grav = (function (THREE) {
 
     var THREE__default = /*#__PURE__*/_interopDefaultLegacy(THREE);
 
-    //import World from "./lod/World";
-    //import Obj from "./objrekt/Obj";
-    //import { Board } from "./nested/Board";
-    //import { Ploppables } from "./lod/Ploppables";
-    var GRAV;
-    (function (GRAV) {
-        GRAV.NO_VAR = false;
-        GRAV.SOME_OTHER_SETTING = false;
-        GRAV.EVEN = 24; // very evenly divisible
-        GRAV.HALVE = GRAV.EVEN / 2;
-        GRAV.YUM = GRAV.EVEN;
-        //export var wlrd: World;
-        //export var ply: Obj;
-        var started = false;
-        function sample(a) {
-            return a[Math.floor(Math.random() * a.length)];
+    class Pts {
+        static pt(a) {
+            return { x: a[0], y: a[1] };
         }
-        GRAV.sample = sample;
-        function clamp(val, min, max) {
-            return val > max ? max : val < min ? min : val;
+        static clone(zx) {
+            return [zx[0], zx[1]];
         }
-        GRAV.clamp = clamp;
-        let RESOURCES;
-        (function (RESOURCES) {
-            RESOURCES[RESOURCES["RC_UNDEFINED"] = 0] = "RC_UNDEFINED";
-            RESOURCES[RESOURCES["POPULAR_ASSETS"] = 1] = "POPULAR_ASSETS";
-            RESOURCES[RESOURCES["READY"] = 2] = "READY";
-            RESOURCES[RESOURCES["COUNT"] = 3] = "COUNT";
-        })(RESOURCES = GRAV.RESOURCES || (GRAV.RESOURCES = {}));
-        let resources_loaded = 0b0;
-        function resourced(word) {
-            resources_loaded |= 0b1 << RESOURCES[word];
-            try_start();
+        static make(n, m) {
+            return [n, m];
         }
-        GRAV.resourced = resourced;
-        function try_start() {
-            let count = 0;
-            let i = 0;
-            for (; i < RESOURCES.COUNT; i++)
-                (resources_loaded & 0b1 << i) ? count++ : void (0);
-            if (count == RESOURCES.COUNT)
-                start();
+        static area_every(bb, callback) {
+            let y = bb.min[1];
+            for (; y <= bb.max[1]; y++) {
+                let x = bb.max[0];
+                for (; x >= bb.min[0]; x--) {
+                    callback([x, y]);
+                }
+            }
         }
-        function critical(mask) {
-            // Couldn't load
-            console.error('resource', mask);
+        static project(a) {
+            return [a[0] / 2 + a[1] / 2, a[1] / 4 - a[0] / 4];
         }
-        GRAV.critical = critical;
-        function init() {
-            console.log('grav init');
-            //wlrd = World.rig();
-            resourced('RC_UNDEFINED');
-            resourced('POPULAR_ASSETS');
-            resourced('READY');
-            window['GRAV'] = GRAV;
+        static unproject(a) {
+            return [a[0] - a[1] * 2, a[1] * 2 + a[0]];
         }
-        GRAV.init = init;
-        function start() {
-            if (started)
-                return;
-            console.log('grav start');
-            if (window.location.href.indexOf("#novar") != -1)
-                GRAV.NO_VAR = false;
-            //wlrd.populate();
-            //setTimeout(() => Board.messageslide('', 'You get one cheap set of shoes, and a well-kept shovel.'), 1000);
-            started = true;
+        static to_string(a) {
+            const pr = (b) => b != undefined ? `, ${b}` : '';
+            return `${a[0]}, ${a[1]}` + pr(a[2]) + pr(a[3]);
         }
-        function update() {
-            if (!started)
-                return;
-            //wlrd.update();
-            //Board.update();
-            //Ploppables.update();
+        static equals(a, b) {
+            return a[0] == b[0] && a[1] == b[1];
         }
-        GRAV.update = update;
-    })(GRAV || (GRAV = {}));
+        static floor(a) {
+            return [Math.floor(a[0]), Math.floor(a[1])];
+        }
+        static ceil(a) {
+            return [Math.ceil(a[0]), Math.ceil(a[1])];
+        }
+        static inv(a) {
+            return [-a[0], -a[1]];
+        }
+        static mult(a, n, m) {
+            return [a[0] * n, a[1] * (m || n)];
+        }
+        static divide(a, n, m) {
+            return [a[0] / n, a[1] / (m || n)];
+        }
+        static subtract(a, b) {
+            return [a[0] - b[0], a[1] - b[1]];
+        }
+        static add(a, b) {
+            return [a[0] + b[0], a[1] + b[1]];
+        }
+        static abs(a) {
+            return [Math.abs(a[0]), Math.abs(a[1])];
+        }
+        static min(a, b) {
+            return [Math.min(a[0], b[0]), Math.min(a[1], b[1])];
+        }
+        static max(a, b) {
+            return [Math.max(a[0], b[0]), Math.max(a[1], b[1])];
+        }
+        static together(zx) {
+            return zx[0] + zx[1];
+        }
+    }
 
     const fragmentPost = `
 // Todo add effect
@@ -230,6 +220,189 @@ void main() {
     })(Renderer || (Renderer = {}));
     var Renderer$1 = Renderer;
 
+    var Grav;
+    (function (Grav) {
+        class World {
+            constructor() {
+                this.pos = [0, 0];
+            }
+            static make() {
+                return new World;
+            }
+            add(obj) {
+            }
+            remove(obj) {
+            }
+            update() {
+                this.move();
+                this.stats();
+            }
+            move() {
+                let speed = 5;
+                let p = this.pos;
+                if (App$1.keys['x'])
+                    speed *= 10;
+                if (App$1.keys['w'])
+                    p[1] -= speed;
+                if (App$1.keys['s'])
+                    p[1] += speed;
+                if (App$1.keys['a'])
+                    p[0] += speed;
+                if (App$1.keys['d'])
+                    p[0] -= speed;
+                Renderer$1.scene.position.set(p[0], p[1], 0);
+            }
+            stats() {
+                let crunch = ``;
+                crunch += `world pos: ${Pts.to_string(this.pos)}`;
+                App$1.sethtml('.stats', crunch);
+            }
+        }
+        Grav.World = World;
+        class Obj {
+            constructor() {
+                Obj.Num++;
+            }
+        }
+        Obj.Num = 0;
+        Grav.Obj = Obj;
+        class Draw {
+            constructor() {
+                Draw.Num++;
+            }
+            delete() {
+                Draw.Num--;
+                this.despawn();
+            }
+            spawn() {
+                var _a;
+                Draw.Active++;
+                (_a = this.element) === null || _a === void 0 ? void 0 : _a.create();
+            }
+            despawn() {
+                var _a;
+                Draw.Active--;
+                (_a = this.element) === null || _a === void 0 ? void 0 : _a.destroy();
+            }
+        }
+        Draw.Num = 0;
+        Draw.Active = 0;
+        Grav.Draw = Draw;
+        class Element {
+            constructor() {
+            }
+            build() {
+            }
+            destroy() {
+                var _a, _b;
+                (_a = this.geometry) === null || _a === void 0 ? void 0 : _a.dispose();
+                (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
+            }
+            create() {
+                this.geometry = new THREE.PlaneBufferGeometry(30, 30, 2, 2);
+                let map = Renderer$1.loadtexture(`img/${this.img}.png`);
+                this.material = new THREE.MeshBasicMaterial({
+                    map: map,
+                    transparent: true,
+                    //color: 0xffffff,
+                    color: 'red'
+                });
+                this.mesh = new THREE.Mesh(this.geometry, this.material);
+                this.mesh.frustumCulled = false;
+                this.mesh.matrixAutoUpdate = false;
+                this.update();
+                Renderer$1.scene.add(this.mesh);
+            }
+            update() {
+            }
+        }
+        Grav.Element = Element;
+    })(Grav || (Grav = {}));
+    var Grav$1 = Grav;
+
+    var TestingChamber;
+    (function (TestingChamber) {
+        function Adept() {
+            console.log('start testing chamber');
+        }
+        TestingChamber.Adept = Adept;
+    })(TestingChamber || (TestingChamber = {}));
+    var TestingChamber$1 = TestingChamber;
+
+    var GRAV;
+    (function (GRAV) {
+        GRAV.NO_VAR = false;
+        GRAV.SOME_OTHER_SETTING = false;
+        GRAV.EVEN = 24; // very evenly divisible
+        GRAV.HALVE = GRAV.EVEN / 2;
+        GRAV.YUM = GRAV.EVEN;
+        var started = false;
+        function sample(a) {
+            return a[Math.floor(Math.random() * a.length)];
+        }
+        GRAV.sample = sample;
+        function clamp(val, min, max) {
+            return val > max ? max : val < min ? min : val;
+        }
+        GRAV.clamp = clamp;
+        let RESOURCES;
+        (function (RESOURCES) {
+            RESOURCES[RESOURCES["RC_UNDEFINED"] = 0] = "RC_UNDEFINED";
+            RESOURCES[RESOURCES["POPULAR_ASSETS"] = 1] = "POPULAR_ASSETS";
+            RESOURCES[RESOURCES["READY"] = 2] = "READY";
+            RESOURCES[RESOURCES["COUNT"] = 3] = "COUNT";
+        })(RESOURCES = GRAV.RESOURCES || (GRAV.RESOURCES = {}));
+        let resources_loaded = 0b0;
+        function resourced(word) {
+            resources_loaded |= 0b1 << RESOURCES[word];
+            try_start();
+        }
+        GRAV.resourced = resourced;
+        function try_start() {
+            let count = 0;
+            let i = 0;
+            for (; i < RESOURCES.COUNT; i++)
+                if (resources_loaded & 0b1 << i)
+                    count++;
+            if (count == RESOURCES.COUNT)
+                start();
+        }
+        function critical(mask) {
+            // Couldn't load
+            console.error('resource', mask);
+        }
+        GRAV.critical = critical;
+        function init() {
+            console.log('grav init');
+            GRAV.wlrd = Grav$1.World.make();
+            resourced('RC_UNDEFINED');
+            resourced('POPULAR_ASSETS');
+            resourced('READY');
+            window['GRAV'] = GRAV;
+        }
+        GRAV.init = init;
+        function start() {
+            if (started)
+                return;
+            console.log('grav start');
+            if (window.location.href.indexOf("#testingchamber") != -1)
+                TestingChamber$1.Adept();
+            if (window.location.href.indexOf("#novar") != -1)
+                GRAV.NO_VAR = false;
+            //wlrd.populate();
+            //setTimeout(() => Board.messageslide('', 'You get one cheap set of shoes, and a well-kept shovel.'), 1000);
+            started = true;
+        }
+        function update() {
+            if (!started)
+                return;
+            GRAV.wlrd.update();
+            //Board.update();
+            //Ploppables.update();
+        }
+        GRAV.update = update;
+    })(GRAV || (GRAV = {}));
+
     var App;
     (function (App) {
         let KEY;
@@ -290,6 +463,11 @@ void main() {
             delay();
         }
         App.loop = loop;
+        function sethtml(selector, html) {
+            let element = document.querySelectorAll(selector)[0];
+            element.innerHTML = html;
+        }
+        App.sethtml = sethtml;
     })(App || (App = {}));
     window['App'] = App;
     var App$1 = App;

@@ -60,6 +60,11 @@ var App;
         delay();
     }
     App.loop = loop;
+    function sethtml(selector, html) {
+        let element = document.querySelectorAll(selector)[0];
+        element.innerHTML = html;
+    }
+    App.sethtml = sethtml;
 })(App || (App = {}));
 window['App'] = App;
 export default App;

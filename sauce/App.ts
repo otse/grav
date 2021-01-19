@@ -61,6 +61,11 @@ namespace App {
 		wheel = 0;
 		delay();
 	}
+	export function sethtml(selector, html)
+	{
+		let element = document.querySelectorAll(selector)[0];
+		element.innerHTML = html;
+	}
 }
 
 window['App'] = App;
