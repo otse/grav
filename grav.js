@@ -269,15 +269,8 @@ void main() {
                 App$1.sethtml('.stats', crunch);
             }
             init() {
-                let ply = new Obj;
-                let drawable = new Drawable;
-                drawable.obj = ply;
-                drawable.done();
-                ply.drawable = drawable;
-                let quad = new Quad;
-                quad.img = 'redfighter0005';
-                quad.done();
-                ply.drawable.shape = quad;
+                let ply = new Grav.Ply;
+                ply.done();
                 GRAV$1.ply = ply;
                 GRAV$1.wlrd.add(ply);
             }
@@ -360,17 +353,15 @@ void main() {
                 (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
             }
             setup() {
-                this.geometry = new THREE.PlaneBufferGeometry(30, 30, 2, 2);
+                this.geometry = new THREE.PlaneBufferGeometry(100, 100, 2, 2);
                 let map = Renderer$1.loadtexture(`img/${this.img}.png`);
                 this.material = new THREE.MeshBasicMaterial({
                     map: map,
                     transparent: true,
-                    //color: 0xffffff,
-                    color: 'red'
                 });
                 this.mesh = new THREE.Mesh(this.geometry, this.material);
-                this.mesh.frustumCulled = false;
-                this.mesh.matrixAutoUpdate = false;
+                //this.mesh.frustumCulled = false;
+                //this.mesh.matrixAutoUpdate = false;
                 this.update();
                 Renderer$1.scene.add(this.mesh);
             }
@@ -378,6 +369,24 @@ void main() {
             }
         }
         Grav.Quad = Quad;
+        class Ply extends Grav.Obj {
+            constructor() {
+                super();
+            }
+            done() {
+                let drawable = new Grav.Drawable;
+                drawable.obj = this;
+                drawable.done();
+                this.drawable = drawable;
+                let quad = new Grav.Quad;
+                quad.img = 'redfighter0005';
+                quad.done();
+                this.drawable.shape = quad;
+                GRAV$1.ply = this;
+                GRAV$1.wlrd.add(this);
+            }
+        }
+        Grav.Ply = Ply;
     })(Grav || (Grav = {}));
     var Grav$1 = Grav;
 

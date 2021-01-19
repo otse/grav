@@ -1,5 +1,5 @@
 
-import Grav from "./Code";
+import Grav from "./Game";
 
 import TestingChamber from "./TestingChamber";
 
@@ -14,7 +14,7 @@ export namespace GRAV {
 	export const YUM = EVEN;
 
 	export var wlrd: Grav.World;
-	export var ply: Grav.Obj;
+	export var ply: Grav.Ply;
 
 	var started = false;
 

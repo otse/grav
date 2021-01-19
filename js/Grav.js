@@ -1,4 +1,4 @@
-import Grav from "./Code";
+import Grav from "./Game";
 import TestingChamber from "./TestingChamber";
 export var GRAV;
 (function (GRAV) {

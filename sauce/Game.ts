@@ -1,6 +1,7 @@
 import { Mesh, PlaneBufferGeometry, MeshBasicMaterial, Vector3, Color } from "three";
-import App from "./App";
 import GRAV from "./Grav";
+
+import App from "./App";
 
 import Pts from "./Pts";
 import Renderer from "./Renderer";
@@ -49,15 +50,8 @@ namespace Grav {
 			App.sethtml('.stats', crunch);
 		}
 		init() {
-			let ply = new Obj;
-			let drawable = new Drawable;
-			drawable.obj = ply;
-			drawable.done();
-			ply.drawable = drawable;
-			let quad = new Quad;
-			quad.img = 'redfighter0005';
-			quad.done();
-			ply.drawable.shape = quad;
+			let ply = new Grav.Ply;
+			ply.done();
 			GRAV.ply = ply;
 			GRAV.wlrd.add(ply);
 		}
@@ -129,9 +123,6 @@ namespace Grav {
 			// implement
 		}
 	}
-	export namespace Shape {
-		export type Me = Quad;
-	}
 	
 	export class Quad extends Shape {
 		img: string = 'forgot to set';
@@ -148,17 +139,17 @@ namespace Grav {
 			this.material?.dispose();
 		}
 		setup() {
-			this.geometry = new PlaneBufferGeometry(30, 30, 2, 2);
+			this.geometry = new PlaneBufferGeometry(100, 100, 2, 2);
 			let map = Renderer.loadtexture(`img/${this.img}.png`);
 			this.material = new MeshBasicMaterial({
 				map: map,
 				transparent: true,
 				//color: 0xffffff,
-				color: 'red'
+				//color: 'red'
 			});
 			this.mesh = new Mesh(this.geometry, this.material);
-			this.mesh.frustumCulled = false;
-			this.mesh.matrixAutoUpdate = false;
+			//this.mesh.frustumCulled = false;
+			//this.mesh.matrixAutoUpdate = false;
 			this.update();
 			Renderer.scene.add(this.mesh);
 		}
@@ -166,7 +157,24 @@ namespace Grav {
 
 		}
 	}
-	
+
+	export class Ply extends Grav.Obj {
+		constructor() {
+			super();
+		}
+		done() {
+			let drawable = new Grav.Drawable;
+			drawable.obj = this;
+			drawable.done();
+			this.drawable = drawable;
+			let quad = new Grav.Quad;
+			quad.img = 'redfighter0005';
+			quad.done();
+			this.drawable.shape = quad;
+			GRAV.ply = this;
+			GRAV.wlrd.add(this);
+		}
+	}
 }
 
 export default Grav;
