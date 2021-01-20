@@ -4,6 +4,7 @@ var Game;
 (function (Game) {
     class Obj {
         constructor() {
+            this.wpos = [0, 0];
             Obj.Num++;
         }
         delete() {
@@ -21,7 +22,9 @@ var Game;
             Obj.Active--;
         }
         update() {
+            var _a;
             // implement
+            (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.update();
         }
     }
     Obj.Num = 0;
@@ -32,7 +35,10 @@ var Game;
             Drawable.Num++;
         }
         done() {
-            //this.shape = new Quad;
+        }
+        update() {
+            var _a;
+            (_a = this.shape) === null || _a === void 0 ? void 0 : _a.update();
         }
         delete() {
             this.hide();
@@ -54,8 +60,13 @@ var Game;
     Game.Drawable = Drawable;
     class Shape {
         constructor() {
+            this.rpos = [0, 0];
+            this.tiedToObj = true; // tied to wpos
         }
         done() {
+            // implement
+        }
+        update() {
             // implement
         }
         setup() {
@@ -72,6 +83,15 @@ var Game;
             this.img = 'forgot to set';
         }
         done() {
+        }
+        update() {
+            var _a, _b, _c, _d;
+            if (this.tiedToObj) {
+                this.rpos = ((_b = (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.obj) === null || _b === void 0 ? void 0 : _b.wpos) || [0, 0];
+                //console.log(`set rpos to wpos ${Pts.to_string(this.rpos)}`);
+            }
+            (_c = this.mesh) === null || _c === void 0 ? void 0 : _c.position.fromArray([...this.rpos, 0]);
+            (_d = this.mesh) === null || _d === void 0 ? void 0 : _d.updateMatrix();
         }
         dispose() {
             var _a, _b;
@@ -90,8 +110,6 @@ var Game;
             //this.mesh.matrixAutoUpdate = false;
             this.update();
             Renderer.scene.add(this.mesh);
-        }
-        update() {
         }
     }
     Game.Quad = Quad;

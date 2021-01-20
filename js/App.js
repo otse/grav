@@ -13,7 +13,7 @@ var App;
     ;
     var keys = {};
     var buttons = {};
-    var pos = { x: 0, y: 0 };
+    var pos = [0, 0];
     App.salt = 'x';
     App.wheel = 0;
     function onkeys(event) {
@@ -35,12 +35,12 @@ var App;
     }
     App.button = button;
     function mouse() {
-        return pos;
+        return [...pos];
     }
     App.mouse = mouse;
     function boot(version) {
         App.salt = version;
-        function onmousemove(e) { pos.x = e.clientX; pos.y = e.clientY; }
+        function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
         function onmousedown(e) { buttons[e.button] = 1; }
         function onmouseup(e) { buttons[e.button] = 0; }
         function onwheel(e) { App.wheel = e.deltaY < 0 ? 1 : -1; }
@@ -69,6 +69,9 @@ var App;
         Grav.update();
         Renderer.render();
         App.wheel = 0;
+        for (let b of [0, 1])
+            if (buttons[b] == 1)
+                buttons[b] = 2;
         delay();
     }
     App.loop = loop;

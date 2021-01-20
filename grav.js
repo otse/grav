@@ -165,8 +165,8 @@ void main() {
         function onWindowResize() {
             Renderer.w = window.innerWidth;
             Renderer.h = window.innerHeight;
-            Renderer.w2 = Renderer.w * Renderer.ndpi;
-            Renderer.h2 = Renderer.h * Renderer.ndpi;
+            Renderer.w2 = Renderer.w; // * ndpi;
+            Renderer.h2 = Renderer.h; // * ndpi;
             Renderer.w3 = Renderer.w2 - (Renderer.w2 - Renderer.w);
             Renderer.h3 = Renderer.h2 - (Renderer.h2 - Renderer.h);
             if (Renderer.w2 % 2 != 0) {
@@ -224,6 +224,7 @@ void main() {
     (function (Game) {
         class Obj {
             constructor() {
+                this.wpos = [0, 0];
                 Obj.Num++;
             }
             delete() {
@@ -241,7 +242,9 @@ void main() {
                 Obj.Active--;
             }
             update() {
+                var _a;
                 // implement
+                (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.update();
             }
         }
         Obj.Num = 0;
@@ -252,7 +255,10 @@ void main() {
                 Drawable.Num++;
             }
             done() {
-                //this.shape = new Quad;
+            }
+            update() {
+                var _a;
+                (_a = this.shape) === null || _a === void 0 ? void 0 : _a.update();
             }
             delete() {
                 this.hide();
@@ -274,8 +280,13 @@ void main() {
         Game.Drawable = Drawable;
         class Shape {
             constructor() {
+                this.rpos = [0, 0];
+                this.tiedToObj = true; // tied to wpos
             }
             done() {
+                // implement
+            }
+            update() {
                 // implement
             }
             setup() {
@@ -292,6 +303,15 @@ void main() {
                 this.img = 'forgot to set';
             }
             done() {
+            }
+            update() {
+                var _a, _b, _c, _d;
+                if (this.tiedToObj) {
+                    this.rpos = ((_b = (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.obj) === null || _b === void 0 ? void 0 : _b.wpos) || [0, 0];
+                    //console.log(`set rpos to wpos ${Pts.to_string(this.rpos)}`);
+                }
+                (_c = this.mesh) === null || _c === void 0 ? void 0 : _c.position.fromArray([...this.rpos, 0]);
+                (_d = this.mesh) === null || _d === void 0 ? void 0 : _d.updateMatrix();
             }
             dispose() {
                 var _a, _b;
@@ -311,14 +331,36 @@ void main() {
                 this.update();
                 Renderer$1.scene.add(this.mesh);
             }
-            update() {
-            }
         }
         Game.Quad = Quad;
     })(Game || (Game = {}));
     var Game$1 = Game;
 
-    //import GRAV from "./Grav";
+    var Game3;
+    (function (Game3) {
+        let globals;
+        (function (globals) {
+        })(globals = Game3.globals || (Game3.globals = {}));
+        class Ping extends Game$1.Obj {
+            constructor() {
+                super();
+            }
+            done() {
+                let drawable = new Game$1.Drawable();
+                drawable.obj = this;
+                drawable.done();
+                let shape = new Game$1.Quad();
+                shape.img = 'redfighter0005';
+                shape.drawable = drawable;
+                shape.done();
+                this.drawable = drawable;
+                this.drawable.shape = shape;
+            }
+        }
+        Game3.Ping = Ping;
+    })(Game3 || (Game3 = {}));
+    var Game3$1 = Game3;
+
     var Game2;
     (function (Game2) {
         let globals;
@@ -327,6 +369,7 @@ void main() {
         class World {
             constructor() {
                 this.objs = [];
+                this.view = [0, 0];
                 this.pos = [0, 0];
             }
             static make() {
@@ -342,29 +385,45 @@ void main() {
                     this.objs.splice(-1, 1);
             }
             update() {
+                this.click();
                 this.move();
                 this.stats();
                 for (let obj of this.objs) {
                     obj.update();
                 }
             }
+            click() {
+                if (App$1.button(0) == 1) {
+                    console.log('clicked the view');
+                    let inverted = App$1.mouse();
+                    inverted = Pts.subtract(inverted, Pts.divide([Renderer$1.w, Renderer$1.h], 2));
+                    inverted[1] = -inverted[1];
+                    let unprojected = Pts.add(this.view, inverted);
+                    let ping = new Game3$1.Ping;
+                    ping.wpos = unprojected;
+                    ping.done();
+                    this.add(ping);
+                }
+            }
             move() {
-                let speed = 5;
-                let p = this.pos;
+                let pan = 5;
                 if (App$1.key('x'))
-                    speed *= 10;
+                    pan *= 10;
                 if (App$1.key('w'))
-                    p[1] -= speed;
+                    this.view[1] += pan;
                 if (App$1.key('s'))
-                    p[1] += speed;
+                    this.view[1] -= pan;
                 if (App$1.key('a'))
-                    p[0] += speed;
+                    this.view[0] -= pan;
                 if (App$1.key('d'))
-                    p[0] -= speed;
-                Renderer$1.scene.position.set(p[0], p[1], 0);
+                    this.view[0] += pan;
+                let inv = Pts.inv(this.view);
+                Renderer$1.scene.position.set(inv[0], inv[1], 0);
             }
             stats() {
                 let crunch = ``;
+                crunch += `mouse: ${Pts.to_string(App$1.mouse())}<br /><br />`;
+                crunch += `world view: ${Pts.to_string(this.view)}<br />`;
                 crunch += `world pos: ${Pts.to_string(this.pos)}<br />`;
                 crunch += `num game objs: ${Game$1.Obj.Active} / ${Game$1.Obj.Num}<br />`;
                 crunch += `num drawables: ${Game$1.Drawable.Active} / ${Game$1.Drawable.Num}<br />`;
@@ -386,14 +445,15 @@ void main() {
                 super();
             }
             done() {
-                let drawable = new Game$1.Drawable;
+                let drawable = new Game$1.Drawable();
                 drawable.obj = this;
                 drawable.done();
+                let shape = new Game$1.Quad();
+                shape.drawable = drawable;
+                shape.img = 'redfighter0005';
+                shape.done();
                 this.drawable = drawable;
-                let quad = new Game$1.Quad;
-                quad.img = 'redfighter0005';
-                quad.done();
-                this.drawable.shape = quad;
+                this.drawable.shape = shape;
             }
         }
         Game2.Ply = Ply;
@@ -416,7 +476,7 @@ void main() {
         Grav.EVEN = 24; // very evenly divisible
         Grav.HALVE = Grav.EVEN / 2;
         Grav.YUM = Grav.EVEN;
-        const MAX_WAIT = 3000;
+        const MAX_WAIT = 1500;
         var started = false;
         function sample(a) {
             return a[Math.floor(Math.random() * a.length)];
@@ -508,7 +568,7 @@ void main() {
         })(KEY = App.KEY || (App.KEY = {}));
         var keys = {};
         var buttons = {};
-        var pos = { x: 0, y: 0 };
+        var pos = [0, 0];
         App.salt = 'x';
         App.wheel = 0;
         function onkeys(event) {
@@ -530,12 +590,12 @@ void main() {
         }
         App.button = button;
         function mouse() {
-            return pos;
+            return [...pos];
         }
         App.mouse = mouse;
         function boot(version) {
             App.salt = version;
-            function onmousemove(e) { pos.x = e.clientX; pos.y = e.clientY; }
+            function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
             function onmousedown(e) { buttons[e.button] = 1; }
             function onmouseup(e) { buttons[e.button] = 0; }
             function onwheel(e) { App.wheel = e.deltaY < 0 ? 1 : -1; }
@@ -564,6 +624,9 @@ void main() {
             Grav.update();
             Renderer$1.render();
             App.wheel = 0;
+            for (let b of [0, 1])
+                if (buttons[b] == 1)
+                    buttons[b] = 2;
             delay();
         }
         App.loop = loop;

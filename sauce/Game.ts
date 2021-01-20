@@ -8,6 +8,7 @@ namespace Game {
 	export class Obj { // extend me
 		static Num = 0;
 		static Active = 0;
+		wpos: Vec2 = [0, 0]
 		drawable: Drawable | undefined;
 		constructor() {
 			Obj.Num++;
@@ -26,10 +27,8 @@ namespace Game {
 		}
 		update() {
 			// implement
+			this.drawable?.update();
 		}
-	}
-	namespace Obj {
-		export type Me = Obj;
 	}
 	export class Drawable {
 		static Num = 0;
@@ -40,7 +39,9 @@ namespace Game {
 			Drawable.Num++;
 		}
 		done() {
-			//this.shape = new Quad;
+		}
+		update() {
+			this.shape?.update();
 		}
 		delete() {
 			this.hide();
@@ -56,10 +57,16 @@ namespace Game {
 		}
 	}
 	export class Shape {
+		rpos: Vec2 = [0, 0];
+		tiedToObj = true; // tied to wpos
+		drawable: Drawable | undefined;
 		constructor() {
 
 		}
 		done() {
+			// implement
+		}
+		update() {
 			// implement
 		}
 		setup() {
@@ -79,6 +86,14 @@ namespace Game {
 		}
 		done() {
 		}
+		update() {			
+			if (this.tiedToObj) {
+				this.rpos = this.drawable?.obj?.wpos || [0, 0];
+				//console.log(`set rpos to wpos ${Pts.to_string(this.rpos)}`);
+			}
+			this.mesh?.position.fromArray([...this.rpos, 0]);
+			this.mesh?.updateMatrix();
+		}
 		dispose() {
 			this.geometry?.dispose();
 			this.material?.dispose();
@@ -97,9 +112,6 @@ namespace Game {
 			//this.mesh.matrixAutoUpdate = false;
 			this.update();
 			Renderer.scene.add(this.mesh);
-		}
-		update() {
-
 		}
 	}
 }

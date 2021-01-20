@@ -7,7 +7,7 @@ export var Grav;
     Grav.EVEN = 24; // very evenly divisible
     Grav.HALVE = Grav.EVEN / 2;
     Grav.YUM = Grav.EVEN;
-    const MAX_WAIT = 3000;
+    const MAX_WAIT = 1500;
     var started = false;
     function sample(a) {
         return a[Math.floor(Math.random() * a.length)];

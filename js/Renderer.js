@@ -100,8 +100,8 @@ var Renderer;
     function onWindowResize() {
         Renderer.w = window.innerWidth;
         Renderer.h = window.innerHeight;
-        Renderer.w2 = Renderer.w * Renderer.ndpi;
-        Renderer.h2 = Renderer.h * Renderer.ndpi;
+        Renderer.w2 = Renderer.w; // * ndpi;
+        Renderer.h2 = Renderer.h; // * ndpi;
         Renderer.w3 = Renderer.w2 - (Renderer.w2 - Renderer.w);
         Renderer.h3 = Renderer.h2 - (Renderer.h2 - Renderer.h);
         if (Renderer.w2 % 2 != 0) {

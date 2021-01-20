@@ -13,7 +13,7 @@ export namespace Grav {
 	export const HALVE = EVEN / 2;
 	export const YUM = EVEN;
 
-	const MAX_WAIT = 3000;
+	const MAX_WAIT = 1500;
 
 	var started = false;
 

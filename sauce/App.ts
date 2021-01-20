@@ -12,7 +12,7 @@ namespace App {
 	};
 	var keys = {};
 	var buttons = {};
-	var pos = { x: 0, y: 0 };
+	var pos: Vec2 = [0, 0];
 	export var salt = 'x';
 	export var wheel = 0;
 	export function onkeys(event) {
@@ -31,11 +31,11 @@ namespace App {
 		return buttons[b];
 	}
 	export function mouse() {
-		return pos;
+		return <Vec2>[...pos];
 	}
 	export function boot(version: string) {
 		salt = version;
-		function onmousemove(e) { pos.x = e.clientX; pos.y = e.clientY; }
+		function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
 		function onmousedown(e) { buttons[e.button] = 1; }
 		function onmouseup(e) { buttons[e.button] = 0; }
 		function onwheel(e) { wheel = e.deltaY < 0 ? 1 : -1; }
@@ -62,6 +62,9 @@ namespace App {
 		Grav.update();
 		Renderer.render();
 		wheel = 0;
+		for (let b of [0, 1])
+			if (buttons[b] == 1)
+				buttons[b] = 2;
 		delay();
 	}
 	export function sethtml(selector, html) {

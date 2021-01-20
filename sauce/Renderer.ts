@@ -155,8 +155,8 @@ namespace Renderer {
 	function onWindowResize() {
 		w = window.innerWidth;
 		h = window.innerHeight;
-		w2 = w * ndpi;
-		h2 = h * ndpi;
+		w2 = w;// * ndpi;
+		h2 = h;// * ndpi;
 		w3 = w2 - (w2 - w);
 		h3 = h2 - (h2 - h);
 		if (w2 % 2 != 0) {
