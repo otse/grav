@@ -1,10 +1,10 @@
-
-import Grav from "./Game";
+import Game from "./Game";
+import Game2 from "./Game2";
 
 import TestingChamber from "./TestingChamber";
 
 
-export namespace GRAV {
+export namespace Grav {
 
 	export var NO_VAR = false;
 	export var SOME_OTHER_SETTING = false;
@@ -13,8 +13,7 @@ export namespace GRAV {
 	export const HALVE = EVEN / 2;
 	export const YUM = EVEN;
 
-	export var wlrd: Grav.World;
-	export var ply: Grav.Ply;
+	const MAX_WAIT = 3000;
 
 	var started = false;
 
@@ -27,11 +26,12 @@ export namespace GRAV {
 	export enum RESOURCES {
 		RC_UNDEFINED = 0,
 		POPULAR_ASSETS,
+		CANT_FIND,
 		READY,
 		COUNT
 	};
+	let timer;
 	let resources_loaded = 0b0;
-
 	export function resourced(word: string) {
 		resources_loaded |= 0b1 << RESOURCES[word];
 		try_start();
@@ -43,6 +43,12 @@ export namespace GRAV {
 			if (resources_loaded & 0b1 << i) count++;
 		if (count == RESOURCES.COUNT)
 			start();
+		clearTimeout(timer);
+		timer = setTimeout(start_anyway, MAX_WAIT);
+	}
+	export function start_anyway() {
+		console.warn('couldnt load everything, starting anyway');
+		start();
 	}
 	export function critical(mask: string) {
 		// Couldn't load
@@ -50,13 +56,12 @@ export namespace GRAV {
 	}
 	export function init() {
 		console.log('grav init');
-		wlrd = Grav.World.make();
-		wlrd.init();
+		Game2.World.make();
 
 		resourced('RC_UNDEFINED');
 		resourced('POPULAR_ASSETS');
 		resourced('READY');
-		window['GRAV'] = GRAV;
+		window['GRAV'] = Grav;
 	}
 	function start() {
 		if (started)
@@ -66,9 +71,9 @@ export namespace GRAV {
 			TestingChamber.Adept();
 		if (window.location.href.indexOf("#novar") != -1)
 			NO_VAR = false;
-
 		//wlrd.populate();
 		//setTimeout(() => Board.messageslide('', 'You get one cheap set of shoes, and a well-kept shovel.'), 1000);
+		clearTimeout(timer);
 		started = true;
 	}
 
@@ -76,7 +81,7 @@ export namespace GRAV {
 		if (!started)
 			return;
 
-		wlrd.update();
+		Game2.globals.wlrd.update();
 
 		//Board.update();
 
@@ -85,4 +90,4 @@ export namespace GRAV {
 
 }
 
-export default GRAV;
+export default Grav;

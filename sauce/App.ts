@@ -1,4 +1,5 @@
-import LUMBER, { GRAV } from "./Grav"
+import { Grav } from "./Grav"
+
 import Renderer from "./Renderer"
 
 
@@ -42,7 +43,7 @@ namespace App {
 		document.onwheel = onwheel;
 
 		Renderer.init();
-		GRAV.init();
+		Grav.init();
 		loop(0);
 	}
 	export function delay() {
@@ -56,7 +57,7 @@ namespace App {
 	export function loop(timestamp) {
 		requestAnimationFrame(loop);
 		Renderer.update();
-		GRAV.update();
+		Grav.update();
 		Renderer.render();
 		wheel = 0;
 		delay();

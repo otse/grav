@@ -1,35 +1,38 @@
-import Grav from "./Game";
+import Game2 from "./Game2";
 import TestingChamber from "./TestingChamber";
-export var GRAV;
-(function (GRAV) {
-    GRAV.NO_VAR = false;
-    GRAV.SOME_OTHER_SETTING = false;
-    GRAV.EVEN = 24; // very evenly divisible
-    GRAV.HALVE = GRAV.EVEN / 2;
-    GRAV.YUM = GRAV.EVEN;
+export var Grav;
+(function (Grav) {
+    Grav.NO_VAR = false;
+    Grav.SOME_OTHER_SETTING = false;
+    Grav.EVEN = 24; // very evenly divisible
+    Grav.HALVE = Grav.EVEN / 2;
+    Grav.YUM = Grav.EVEN;
+    const MAX_WAIT = 3000;
     var started = false;
     function sample(a) {
         return a[Math.floor(Math.random() * a.length)];
     }
-    GRAV.sample = sample;
+    Grav.sample = sample;
     function clamp(val, min, max) {
         return val > max ? max : val < min ? min : val;
     }
-    GRAV.clamp = clamp;
+    Grav.clamp = clamp;
     let RESOURCES;
     (function (RESOURCES) {
         RESOURCES[RESOURCES["RC_UNDEFINED"] = 0] = "RC_UNDEFINED";
         RESOURCES[RESOURCES["POPULAR_ASSETS"] = 1] = "POPULAR_ASSETS";
-        RESOURCES[RESOURCES["READY"] = 2] = "READY";
-        RESOURCES[RESOURCES["COUNT"] = 3] = "COUNT";
-    })(RESOURCES = GRAV.RESOURCES || (GRAV.RESOURCES = {}));
+        RESOURCES[RESOURCES["CANT_FIND"] = 2] = "CANT_FIND";
+        RESOURCES[RESOURCES["READY"] = 3] = "READY";
+        RESOURCES[RESOURCES["COUNT"] = 4] = "COUNT";
+    })(RESOURCES = Grav.RESOURCES || (Grav.RESOURCES = {}));
     ;
+    let timer;
     let resources_loaded = 0b0;
     function resourced(word) {
         resources_loaded |= 0b1 << RESOURCES[word];
         try_start();
     }
-    GRAV.resourced = resourced;
+    Grav.resourced = resourced;
     function try_start() {
         let count = 0;
         let i = 0;
@@ -38,22 +41,28 @@ export var GRAV;
                 count++;
         if (count == RESOURCES.COUNT)
             start();
+        clearTimeout(timer);
+        timer = setTimeout(start_anyway, MAX_WAIT);
     }
+    function start_anyway() {
+        console.warn('couldnt load everything, starting anyway');
+        start();
+    }
+    Grav.start_anyway = start_anyway;
     function critical(mask) {
         // Couldn't load
         console.error('resource', mask);
     }
-    GRAV.critical = critical;
+    Grav.critical = critical;
     function init() {
         console.log('grav init');
-        GRAV.wlrd = Grav.World.make();
-        GRAV.wlrd.init();
+        Game2.World.make();
         resourced('RC_UNDEFINED');
         resourced('POPULAR_ASSETS');
         resourced('READY');
-        window['GRAV'] = GRAV;
+        window['GRAV'] = Grav;
     }
-    GRAV.init = init;
+    Grav.init = init;
     function start() {
         if (started)
             return;
@@ -61,18 +70,19 @@ export var GRAV;
         if (window.location.href.indexOf("#testingchamber") != -1)
             TestingChamber.Adept();
         if (window.location.href.indexOf("#novar") != -1)
-            GRAV.NO_VAR = false;
+            Grav.NO_VAR = false;
         //wlrd.populate();
         //setTimeout(() => Board.messageslide('', 'You get one cheap set of shoes, and a well-kept shovel.'), 1000);
+        clearTimeout(timer);
         started = true;
     }
     function update() {
         if (!started)
             return;
-        GRAV.wlrd.update();
+        Game2.globals.wlrd.update();
         //Board.update();
         //Ploppables.update();
     }
-    GRAV.update = update;
-})(GRAV || (GRAV = {}));
-export default GRAV;
+    Grav.update = update;
+})(Grav || (Grav = {}));
+export default Grav;

@@ -1,4 +1,4 @@
-import { GRAV } from "./Grav";
+import { Grav } from "./Grav";
 import Renderer from "./Renderer";
 var App;
 (function (App) {
@@ -38,7 +38,7 @@ var App;
         document.onmouseup = onmouseup;
         document.onwheel = onwheel;
         Renderer.init();
-        GRAV.init();
+        Grav.init();
         loop(0);
     }
     App.boot = boot;
@@ -54,7 +54,7 @@ var App;
     function loop(timestamp) {
         requestAnimationFrame(loop);
         Renderer.update();
-        GRAV.update();
+        Grav.update();
         Renderer.render();
         App.wheel = 0;
         delay();

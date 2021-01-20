@@ -4,6 +4,7 @@
         "sourceMap": false,
         "module": "es6",
         "target": "es6",
+        "esModuleInterop": true,
         "jsx": "preserve",
         "lib": [
             "dom",

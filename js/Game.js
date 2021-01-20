@@ -1,64 +1,7 @@
 import { Mesh, PlaneBufferGeometry, MeshBasicMaterial } from "three";
-import GRAV from "./Grav";
-import App from "./App";
-import Pts from "./Pts";
 import Renderer from "./Renderer";
-var Grav;
-(function (Grav) {
-    class World {
-        constructor() {
-            this.objs = [];
-            this.pos = [0, 0];
-        }
-        static make() {
-            return new World;
-        }
-        add(obj) {
-            this.objs.push(obj);
-            obj.show();
-        }
-        remove(obj) {
-            let i = this.objs.indexOf(obj);
-            if (i != -1)
-                this.objs.splice(-1, 1);
-        }
-        update() {
-            this.move();
-            this.stats();
-            for (let obj of this.objs) {
-                obj.update();
-            }
-        }
-        move() {
-            let speed = 5;
-            let p = this.pos;
-            if (App.keys['x'])
-                speed *= 10;
-            if (App.keys['w'])
-                p[1] -= speed;
-            if (App.keys['s'])
-                p[1] += speed;
-            if (App.keys['a'])
-                p[0] += speed;
-            if (App.keys['d'])
-                p[0] -= speed;
-            Renderer.scene.position.set(p[0], p[1], 0);
-        }
-        stats() {
-            let crunch = ``;
-            crunch += `world pos: ${Pts.to_string(this.pos)}<br />`;
-            crunch += `num game objs: ${Obj.Active} / ${Obj.Num}<br />`;
-            crunch += `num drawables: ${Drawable.Active} / ${Drawable.Num}<br />`;
-            App.sethtml('.stats', crunch);
-        }
-        init() {
-            let ply = new Grav.Ply;
-            ply.done();
-            GRAV.ply = ply;
-            GRAV.wlrd.add(ply);
-        }
-    }
-    Grav.World = World;
+var Game;
+(function (Game) {
     class Obj {
         constructor() {
             Obj.Num++;
@@ -83,7 +26,7 @@ var Grav;
     }
     Obj.Num = 0;
     Obj.Active = 0;
-    Grav.Obj = Obj;
+    Game.Obj = Obj;
     class Drawable {
         constructor() {
             Drawable.Num++;
@@ -108,7 +51,7 @@ var Grav;
     }
     Drawable.Num = 0;
     Drawable.Active = 0;
-    Grav.Drawable = Drawable;
+    Game.Drawable = Drawable;
     class Shape {
         constructor() {
         }
@@ -122,7 +65,7 @@ var Grav;
             // implement
         }
     }
-    Grav.Shape = Shape;
+    Game.Shape = Shape;
     class Quad extends Shape {
         constructor() {
             super();
@@ -151,24 +94,6 @@ var Grav;
         update() {
         }
     }
-    Grav.Quad = Quad;
-    class Ply extends Grav.Obj {
-        constructor() {
-            super();
-        }
-        done() {
-            let drawable = new Grav.Drawable;
-            drawable.obj = this;
-            drawable.done();
-            this.drawable = drawable;
-            let quad = new Grav.Quad;
-            quad.img = 'redfighter0005';
-            quad.done();
-            this.drawable.shape = quad;
-            GRAV.ply = this;
-            GRAV.wlrd.add(this);
-        }
-    }
-    Grav.Ply = Ply;
-})(Grav || (Grav = {}));
-export default Grav;
+    Game.Quad = Quad;
+})(Game || (Game = {}));
+export default Game;

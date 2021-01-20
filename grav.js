@@ -220,15 +220,118 @@ void main() {
     })(Renderer || (Renderer = {}));
     var Renderer$1 = Renderer;
 
-    var Grav;
-    (function (Grav) {
+    var Game;
+    (function (Game) {
+        class Obj {
+            constructor() {
+                Obj.Num++;
+            }
+            delete() {
+                this.hide();
+                Obj.Num--;
+            }
+            show() {
+                var _a;
+                (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.show();
+                Obj.Active++;
+            }
+            hide() {
+                var _a;
+                (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.hide();
+                Obj.Active--;
+            }
+            update() {
+                // implement
+            }
+        }
+        Obj.Num = 0;
+        Obj.Active = 0;
+        Game.Obj = Obj;
+        class Drawable {
+            constructor() {
+                Drawable.Num++;
+            }
+            done() {
+                //this.shape = new Quad;
+            }
+            delete() {
+                this.hide();
+                Drawable.Num--;
+            }
+            show() {
+                var _a;
+                (_a = this.shape) === null || _a === void 0 ? void 0 : _a.setup();
+                Drawable.Active++;
+            }
+            hide() {
+                var _a;
+                (_a = this.shape) === null || _a === void 0 ? void 0 : _a.dispose();
+                Drawable.Active--;
+            }
+        }
+        Drawable.Num = 0;
+        Drawable.Active = 0;
+        Game.Drawable = Drawable;
+        class Shape {
+            constructor() {
+            }
+            done() {
+                // implement
+            }
+            setup() {
+                // implement
+            }
+            dispose() {
+                // implement
+            }
+        }
+        Game.Shape = Shape;
+        class Quad extends Shape {
+            constructor() {
+                super();
+                this.img = 'forgot to set';
+            }
+            done() {
+            }
+            dispose() {
+                var _a, _b;
+                (_a = this.geometry) === null || _a === void 0 ? void 0 : _a.dispose();
+                (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
+            }
+            setup() {
+                this.geometry = new THREE.PlaneBufferGeometry(100, 100, 2, 2);
+                let map = Renderer$1.loadtexture(`img/${this.img}.png`);
+                this.material = new THREE.MeshBasicMaterial({
+                    map: map,
+                    transparent: true,
+                });
+                this.mesh = new THREE.Mesh(this.geometry, this.material);
+                //this.mesh.frustumCulled = false;
+                //this.mesh.matrixAutoUpdate = false;
+                this.update();
+                Renderer$1.scene.add(this.mesh);
+            }
+            update() {
+            }
+        }
+        Game.Quad = Quad;
+    })(Game || (Game = {}));
+    var Game$1 = Game;
+
+    //import GRAV from "./Grav";
+    var Game2;
+    (function (Game2) {
+        let globals;
+        (function (globals) {
+        })(globals = Game2.globals || (Game2.globals = {}));
         class World {
             constructor() {
                 this.objs = [];
                 this.pos = [0, 0];
             }
             static make() {
-                return new World;
+                globals.wlrd = new World;
+                globals.wlrd.init();
             }
             add(obj) {
                 this.objs.push(obj);
@@ -264,131 +367,39 @@ void main() {
             stats() {
                 let crunch = ``;
                 crunch += `world pos: ${Pts.to_string(this.pos)}<br />`;
-                crunch += `num game objs: ${Obj.Active} / ${Obj.Num}<br />`;
-                crunch += `num drawables: ${Drawable.Active} / ${Drawable.Num}<br />`;
+                crunch += `num game objs: ${Game$1.Obj.Active} / ${Game$1.Obj.Num}<br />`;
+                crunch += `num drawables: ${Game$1.Drawable.Active} / ${Game$1.Drawable.Num}<br />`;
                 App$1.sethtml('.stats', crunch);
             }
             init() {
-                let ply = new Grav.Ply;
+                globals.ply = this.ply();
+                this.add(globals.ply);
+            }
+            ply() {
+                let ply = new Game2.Ply;
                 ply.done();
-                GRAV$1.ply = ply;
-                GRAV$1.wlrd.add(ply);
+                return ply;
             }
         }
-        Grav.World = World;
-        class Obj {
-            constructor() {
-                Obj.Num++;
-            }
-            delete() {
-                this.hide();
-                Obj.Num--;
-            }
-            show() {
-                var _a;
-                (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.show();
-                Obj.Active++;
-            }
-            hide() {
-                var _a;
-                (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.hide();
-                Obj.Active--;
-            }
-            update() {
-                // implement
-            }
-        }
-        Obj.Num = 0;
-        Obj.Active = 0;
-        Grav.Obj = Obj;
-        class Drawable {
-            constructor() {
-                Drawable.Num++;
-            }
-            done() {
-                //this.shape = new Quad;
-            }
-            delete() {
-                this.hide();
-                Drawable.Num--;
-            }
-            show() {
-                var _a;
-                (_a = this.shape) === null || _a === void 0 ? void 0 : _a.setup();
-                Drawable.Active++;
-            }
-            hide() {
-                var _a;
-                (_a = this.shape) === null || _a === void 0 ? void 0 : _a.dispose();
-                Drawable.Active--;
-            }
-        }
-        Drawable.Num = 0;
-        Drawable.Active = 0;
-        Grav.Drawable = Drawable;
-        class Shape {
-            constructor() {
-            }
-            done() {
-                // implement
-            }
-            setup() {
-                // implement
-            }
-            dispose() {
-                // implement
-            }
-        }
-        Grav.Shape = Shape;
-        class Quad extends Shape {
-            constructor() {
-                super();
-                this.img = 'forgot to set';
-            }
-            done() {
-            }
-            dispose() {
-                var _a, _b;
-                (_a = this.geometry) === null || _a === void 0 ? void 0 : _a.dispose();
-                (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
-            }
-            setup() {
-                this.geometry = new THREE.PlaneBufferGeometry(100, 100, 2, 2);
-                let map = Renderer$1.loadtexture(`img/${this.img}.png`);
-                this.material = new THREE.MeshBasicMaterial({
-                    map: map,
-                    transparent: true,
-                });
-                this.mesh = new THREE.Mesh(this.geometry, this.material);
-                //this.mesh.frustumCulled = false;
-                //this.mesh.matrixAutoUpdate = false;
-                this.update();
-                Renderer$1.scene.add(this.mesh);
-            }
-            update() {
-            }
-        }
-        Grav.Quad = Quad;
-        class Ply extends Grav.Obj {
+        Game2.World = World;
+        class Ply extends Game$1.Obj {
             constructor() {
                 super();
             }
             done() {
-                let drawable = new Grav.Drawable;
+                let drawable = new Game$1.Drawable;
                 drawable.obj = this;
                 drawable.done();
                 this.drawable = drawable;
-                let quad = new Grav.Quad;
+                let quad = new Game$1.Quad;
                 quad.img = 'redfighter0005';
                 quad.done();
                 this.drawable.shape = quad;
-                GRAV$1.ply = this;
-                GRAV$1.wlrd.add(this);
             }
         }
-        Grav.Ply = Ply;
-    })(Grav || (Grav = {}));
-    var Grav$1 = Grav;
+        Game2.Ply = Ply;
+    })(Game2 || (Game2 = {}));
+    var Game2$1 = Game2;
 
     var TestingChamber;
     (function (TestingChamber) {
@@ -399,35 +410,38 @@ void main() {
     })(TestingChamber || (TestingChamber = {}));
     var TestingChamber$1 = TestingChamber;
 
-    var GRAV;
-    (function (GRAV) {
-        GRAV.NO_VAR = false;
-        GRAV.SOME_OTHER_SETTING = false;
-        GRAV.EVEN = 24; // very evenly divisible
-        GRAV.HALVE = GRAV.EVEN / 2;
-        GRAV.YUM = GRAV.EVEN;
+    var Grav;
+    (function (Grav) {
+        Grav.NO_VAR = false;
+        Grav.SOME_OTHER_SETTING = false;
+        Grav.EVEN = 24; // very evenly divisible
+        Grav.HALVE = Grav.EVEN / 2;
+        Grav.YUM = Grav.EVEN;
+        const MAX_WAIT = 3000;
         var started = false;
         function sample(a) {
             return a[Math.floor(Math.random() * a.length)];
         }
-        GRAV.sample = sample;
+        Grav.sample = sample;
         function clamp(val, min, max) {
             return val > max ? max : val < min ? min : val;
         }
-        GRAV.clamp = clamp;
+        Grav.clamp = clamp;
         let RESOURCES;
         (function (RESOURCES) {
             RESOURCES[RESOURCES["RC_UNDEFINED"] = 0] = "RC_UNDEFINED";
             RESOURCES[RESOURCES["POPULAR_ASSETS"] = 1] = "POPULAR_ASSETS";
-            RESOURCES[RESOURCES["READY"] = 2] = "READY";
-            RESOURCES[RESOURCES["COUNT"] = 3] = "COUNT";
-        })(RESOURCES = GRAV.RESOURCES || (GRAV.RESOURCES = {}));
+            RESOURCES[RESOURCES["CANT_FIND"] = 2] = "CANT_FIND";
+            RESOURCES[RESOURCES["READY"] = 3] = "READY";
+            RESOURCES[RESOURCES["COUNT"] = 4] = "COUNT";
+        })(RESOURCES = Grav.RESOURCES || (Grav.RESOURCES = {}));
+        let timer;
         let resources_loaded = 0b0;
         function resourced(word) {
             resources_loaded |= 0b1 << RESOURCES[word];
             try_start();
         }
-        GRAV.resourced = resourced;
+        Grav.resourced = resourced;
         function try_start() {
             let count = 0;
             let i = 0;
@@ -436,22 +450,28 @@ void main() {
                     count++;
             if (count == RESOURCES.COUNT)
                 start();
+            clearTimeout(timer);
+            timer = setTimeout(start_anyway, MAX_WAIT);
         }
+        function start_anyway() {
+            console.warn('couldnt load everything, starting anyway');
+            start();
+        }
+        Grav.start_anyway = start_anyway;
         function critical(mask) {
             // Couldn't load
             console.error('resource', mask);
         }
-        GRAV.critical = critical;
+        Grav.critical = critical;
         function init() {
             console.log('grav init');
-            GRAV.wlrd = Grav$1.World.make();
-            GRAV.wlrd.init();
+            Game2$1.World.make();
             resourced('RC_UNDEFINED');
             resourced('POPULAR_ASSETS');
             resourced('READY');
-            window['GRAV'] = GRAV;
+            window['GRAV'] = Grav;
         }
-        GRAV.init = init;
+        Grav.init = init;
         function start() {
             if (started)
                 return;
@@ -459,21 +479,21 @@ void main() {
             if (window.location.href.indexOf("#testingchamber") != -1)
                 TestingChamber$1.Adept();
             if (window.location.href.indexOf("#novar") != -1)
-                GRAV.NO_VAR = false;
+                Grav.NO_VAR = false;
             //wlrd.populate();
             //setTimeout(() => Board.messageslide('', 'You get one cheap set of shoes, and a well-kept shovel.'), 1000);
+            clearTimeout(timer);
             started = true;
         }
         function update() {
             if (!started)
                 return;
-            GRAV.wlrd.update();
+            Game2$1.globals.wlrd.update();
             //Board.update();
             //Ploppables.update();
         }
-        GRAV.update = update;
-    })(GRAV || (GRAV = {}));
-    var GRAV$1 = GRAV;
+        Grav.update = update;
+    })(Grav || (Grav = {}));
 
     var App;
     (function (App) {
@@ -513,7 +533,7 @@ void main() {
             document.onmouseup = onmouseup;
             document.onwheel = onwheel;
             Renderer$1.init();
-            GRAV.init();
+            Grav.init();
             loop();
         }
         App.boot = boot;
@@ -529,7 +549,7 @@ void main() {
         function loop(timestamp) {
             requestAnimationFrame(loop);
             Renderer$1.update();
-            GRAV.update();
+            Grav.update();
             Renderer$1.render();
             App.wheel = 0;
             delay();
