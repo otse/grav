@@ -331,7 +331,6 @@ void main() {
             }
             static make() {
                 globals.wlrd = new World;
-                globals.wlrd.init();
             }
             add(obj) {
                 this.objs.push(obj);
@@ -352,15 +351,15 @@ void main() {
             move() {
                 let speed = 5;
                 let p = this.pos;
-                if (App$1.keys['x'])
+                if (App$1.key('x'))
                     speed *= 10;
-                if (App$1.keys['w'])
+                if (App$1.key('w'))
                     p[1] -= speed;
-                if (App$1.keys['s'])
+                if (App$1.key('s'))
                     p[1] += speed;
-                if (App$1.keys['a'])
+                if (App$1.key('a'))
                     p[0] += speed;
-                if (App$1.keys['d'])
+                if (App$1.key('d'))
                     p[0] -= speed;
                 Renderer$1.scene.position.set(p[0], p[1], 0);
             }
@@ -371,7 +370,7 @@ void main() {
                 crunch += `num drawables: ${Game$1.Drawable.Active} / ${Game$1.Drawable.Num}<br />`;
                 App$1.sethtml('.stats', crunch);
             }
-            init() {
+            start() {
                 globals.ply = this.ply();
                 this.add(globals.ply);
             }
@@ -435,7 +434,7 @@ void main() {
             RESOURCES[RESOURCES["READY"] = 3] = "READY";
             RESOURCES[RESOURCES["COUNT"] = 4] = "COUNT";
         })(RESOURCES = Grav.RESOURCES || (Grav.RESOURCES = {}));
-        let timer;
+        let time;
         let resources_loaded = 0b0;
         function resourced(word) {
             resources_loaded |= 0b1 << RESOURCES[word];
@@ -450,14 +449,14 @@ void main() {
                     count++;
             if (count == RESOURCES.COUNT)
                 start();
-            clearTimeout(timer);
-            timer = setTimeout(start_anyway, MAX_WAIT);
         }
-        function start_anyway() {
-            console.warn('couldnt load everything, starting anyway');
-            start();
+        function reasonable_waiter() {
+            if (time + MAX_WAIT < new Date().getTime()) {
+                console.warn(`passed reasonable wait time for resources lets start anyway`);
+                start();
+            }
         }
-        Grav.start_anyway = start_anyway;
+        Grav.reasonable_waiter = reasonable_waiter;
         function critical(mask) {
             // Couldn't load
             console.error('resource', mask);
@@ -466,6 +465,7 @@ void main() {
         function init() {
             console.log('grav init');
             Game2$1.World.make();
+            time = new Date().getTime();
             resourced('RC_UNDEFINED');
             resourced('POPULAR_ASSETS');
             resourced('READY');
@@ -475,19 +475,20 @@ void main() {
         function start() {
             if (started)
                 return;
-            console.log('grav start');
+            console.log('grav starting');
+            Game2$1.globals.wlrd.start();
             if (window.location.href.indexOf("#testingchamber") != -1)
                 TestingChamber$1.Adept();
             if (window.location.href.indexOf("#novar") != -1)
                 Grav.NO_VAR = false;
-            //wlrd.populate();
             //setTimeout(() => Board.messageslide('', 'You get one cheap set of shoes, and a well-kept shovel.'), 1000);
-            clearTimeout(timer);
             started = true;
         }
         function update() {
-            if (!started)
+            if (!started) {
+                reasonable_waiter();
                 return;
+            }
             Game2$1.globals.wlrd.update();
             //Board.update();
             //Ploppables.update();
@@ -499,33 +500,44 @@ void main() {
     (function (App) {
         let KEY;
         (function (KEY) {
-            KEY[KEY["Off"] = 0] = "Off";
-            KEY[KEY["Press"] = 1] = "Press";
-            KEY[KEY["Wait"] = 2] = "Wait";
-            KEY[KEY["Again"] = 3] = "Again";
-            KEY[KEY["Up"] = 4] = "Up";
+            KEY[KEY["OFF"] = 0] = "OFF";
+            KEY[KEY["PRESS"] = 1] = "PRESS";
+            KEY[KEY["WAIT"] = 2] = "WAIT";
+            KEY[KEY["AGAIN"] = 3] = "AGAIN";
+            KEY[KEY["UP"] = 4] = "UP";
         })(KEY = App.KEY || (App.KEY = {}));
-        App.keys = {};
-        App.buttons = {};
-        App.pos = { x: 0, y: 0 };
+        var keys = {};
+        var buttons = {};
+        var pos = { x: 0, y: 0 };
         App.salt = 'x';
         App.wheel = 0;
         function onkeys(event) {
             const key = event.key.toLowerCase();
             if ('keydown' == event.type)
-                App.keys[key] = App.keys[key] ? KEY.Again : KEY.Press;
+                keys[key] = keys[key] ? KEY.AGAIN : KEY.PRESS;
             else if ('keyup' == event.type)
-                App.keys[key] = KEY.Up;
+                keys[key] = KEY.UP;
             if (event.keyCode == 114)
                 event.preventDefault();
-            return;
         }
         App.onkeys = onkeys;
-        function boot(a) {
-            App.salt = a;
-            function onmousemove(e) { App.pos.x = e.clientX; App.pos.y = e.clientY; }
-            function onmousedown(e) { App.buttons[e.button] = 1; }
-            function onmouseup(e) { App.buttons[e.button] = 0; }
+        function key(k) {
+            return keys[k];
+        }
+        App.key = key;
+        function button(b) {
+            return buttons[b];
+        }
+        App.button = button;
+        function mouse() {
+            return pos;
+        }
+        App.mouse = mouse;
+        function boot(version) {
+            App.salt = version;
+            function onmousemove(e) { pos.x = e.clientX; pos.y = e.clientY; }
+            function onmousedown(e) { buttons[e.button] = 1; }
+            function onmouseup(e) { buttons[e.button] = 0; }
             function onwheel(e) { App.wheel = e.deltaY < 0 ? 1 : -1; }
             document.onkeydown = document.onkeyup = onkeys;
             document.onmousemove = onmousemove;
@@ -538,11 +550,11 @@ void main() {
         }
         App.boot = boot;
         function delay() {
-            for (let i in App.keys) {
-                if (KEY.Press == App.keys[i])
-                    App.keys[i] = KEY.Wait;
-                else if (KEY.Up == App.keys[i])
-                    App.keys[i] = KEY.Off;
+            for (let i in keys) {
+                if (KEY.PRESS == keys[i])
+                    keys[i] = KEY.WAIT;
+                else if (KEY.UP == keys[i])
+                    keys[i] = KEY.OFF;
             }
         }
         App.delay = delay;

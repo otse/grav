@@ -26,7 +26,7 @@ export var Grav;
         RESOURCES[RESOURCES["COUNT"] = 4] = "COUNT";
     })(RESOURCES = Grav.RESOURCES || (Grav.RESOURCES = {}));
     ;
-    let timer;
+    let time;
     let resources_loaded = 0b0;
     function resourced(word) {
         resources_loaded |= 0b1 << RESOURCES[word];
@@ -41,14 +41,14 @@ export var Grav;
                 count++;
         if (count == RESOURCES.COUNT)
             start();
-        clearTimeout(timer);
-        timer = setTimeout(start_anyway, MAX_WAIT);
     }
-    function start_anyway() {
-        console.warn('couldnt load everything, starting anyway');
-        start();
+    function reasonable_waiter() {
+        if (time + MAX_WAIT < new Date().getTime()) {
+            console.warn(`passed reasonable wait time for resources lets start anyway`);
+            start();
+        }
     }
-    Grav.start_anyway = start_anyway;
+    Grav.reasonable_waiter = reasonable_waiter;
     function critical(mask) {
         // Couldn't load
         console.error('resource', mask);
@@ -57,6 +57,7 @@ export var Grav;
     function init() {
         console.log('grav init');
         Game2.World.make();
+        time = new Date().getTime();
         resourced('RC_UNDEFINED');
         resourced('POPULAR_ASSETS');
         resourced('READY');
@@ -66,19 +67,20 @@ export var Grav;
     function start() {
         if (started)
             return;
-        console.log('grav start');
+        console.log('grav starting');
+        Game2.globals.wlrd.start();
         if (window.location.href.indexOf("#testingchamber") != -1)
             TestingChamber.Adept();
         if (window.location.href.indexOf("#novar") != -1)
             Grav.NO_VAR = false;
-        //wlrd.populate();
         //setTimeout(() => Board.messageslide('', 'You get one cheap set of shoes, and a well-kept shovel.'), 1000);
-        clearTimeout(timer);
         started = true;
     }
     function update() {
-        if (!started)
+        if (!started) {
+            reasonable_waiter();
             return;
+        }
         Game2.globals.wlrd.update();
         //Board.update();
         //Ploppables.update();

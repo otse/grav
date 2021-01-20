@@ -4,33 +4,45 @@ var App;
 (function (App) {
     let KEY;
     (function (KEY) {
-        KEY[KEY["Off"] = 0] = "Off";
-        KEY[KEY["Press"] = 1] = "Press";
-        KEY[KEY["Wait"] = 2] = "Wait";
-        KEY[KEY["Again"] = 3] = "Again";
-        KEY[KEY["Up"] = 4] = "Up";
+        KEY[KEY["OFF"] = 0] = "OFF";
+        KEY[KEY["PRESS"] = 1] = "PRESS";
+        KEY[KEY["WAIT"] = 2] = "WAIT";
+        KEY[KEY["AGAIN"] = 3] = "AGAIN";
+        KEY[KEY["UP"] = 4] = "UP";
     })(KEY = App.KEY || (App.KEY = {}));
-    App.keys = {};
-    App.buttons = {};
-    App.pos = { x: 0, y: 0 };
+    ;
+    var keys = {};
+    var buttons = {};
+    var pos = { x: 0, y: 0 };
     App.salt = 'x';
     App.wheel = 0;
     function onkeys(event) {
         const key = event.key.toLowerCase();
         if ('keydown' == event.type)
-            App.keys[key] = App.keys[key] ? KEY.Again : KEY.Press;
+            keys[key] = keys[key] ? KEY.AGAIN : KEY.PRESS;
         else if ('keyup' == event.type)
-            App.keys[key] = KEY.Up;
+            keys[key] = KEY.UP;
         if (event.keyCode == 114)
             event.preventDefault();
-        return;
     }
     App.onkeys = onkeys;
-    function boot(a) {
-        App.salt = a;
-        function onmousemove(e) { App.pos.x = e.clientX; App.pos.y = e.clientY; }
-        function onmousedown(e) { App.buttons[e.button] = 1; }
-        function onmouseup(e) { App.buttons[e.button] = 0; }
+    function key(k) {
+        return keys[k];
+    }
+    App.key = key;
+    function button(b) {
+        return buttons[b];
+    }
+    App.button = button;
+    function mouse() {
+        return pos;
+    }
+    App.mouse = mouse;
+    function boot(version) {
+        App.salt = version;
+        function onmousemove(e) { pos.x = e.clientX; pos.y = e.clientY; }
+        function onmousedown(e) { buttons[e.button] = 1; }
+        function onmouseup(e) { buttons[e.button] = 0; }
         function onwheel(e) { App.wheel = e.deltaY < 0 ? 1 : -1; }
         document.onkeydown = document.onkeyup = onkeys;
         document.onmousemove = onmousemove;
@@ -43,11 +55,11 @@ var App;
     }
     App.boot = boot;
     function delay() {
-        for (let i in App.keys) {
-            if (KEY.Press == App.keys[i])
-                App.keys[i] = KEY.Wait;
-            else if (KEY.Up == App.keys[i])
-                App.keys[i] = KEY.Off;
+        for (let i in keys) {
+            if (KEY.PRESS == keys[i])
+                keys[i] = KEY.WAIT;
+            else if (KEY.UP == keys[i])
+                keys[i] = KEY.OFF;
         }
     }
     App.delay = delay;

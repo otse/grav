@@ -30,7 +30,7 @@ export namespace Grav {
 		READY,
 		COUNT
 	};
-	let timer;
+	let time;
 	let resources_loaded = 0b0;
 	export function resourced(word: string) {
 		resources_loaded |= 0b1 << RESOURCES[word];
@@ -43,12 +43,12 @@ export namespace Grav {
 			if (resources_loaded & 0b1 << i) count++;
 		if (count == RESOURCES.COUNT)
 			start();
-		clearTimeout(timer);
-		timer = setTimeout(start_anyway, MAX_WAIT);
 	}
-	export function start_anyway() {
-		console.warn('couldnt load everything, starting anyway');
-		start();
+	export function reasonable_waiter() {
+		if (time + MAX_WAIT < new Date().getTime()) {
+			console.warn(`passed reasonable wait time for resources lets start anyway`);
+			start();
+		}
 	}
 	export function critical(mask: string) {
 		// Couldn't load
@@ -57,7 +57,7 @@ export namespace Grav {
 	export function init() {
 		console.log('grav init');
 		Game2.World.make();
-
+		time = new Date().getTime();
 		resourced('RC_UNDEFINED');
 		resourced('POPULAR_ASSETS');
 		resourced('READY');
@@ -66,25 +66,23 @@ export namespace Grav {
 	function start() {
 		if (started)
 			return;
-		console.log('grav start');
+		console.log('grav starting');
+		Game2.globals.wlrd.start();
 		if (window.location.href.indexOf("#testingchamber") != -1)
 			TestingChamber.Adept();
 		if (window.location.href.indexOf("#novar") != -1)
 			NO_VAR = false;
-		//wlrd.populate();
 		//setTimeout(() => Board.messageslide('', 'You get one cheap set of shoes, and a well-kept shovel.'), 1000);
-		clearTimeout(timer);
 		started = true;
 	}
 
 	export function update() {
-		if (!started)
+		if (!started) {
+			reasonable_waiter();
 			return;
-
+		}
 		Game2.globals.wlrd.update();
-
 		//Board.update();
-
 		//Ploppables.update();
 	}
 

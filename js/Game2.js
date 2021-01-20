@@ -15,7 +15,6 @@ var Game2;
         }
         static make() {
             globals.wlrd = new World;
-            globals.wlrd.init();
         }
         add(obj) {
             this.objs.push(obj);
@@ -36,15 +35,15 @@ var Game2;
         move() {
             let speed = 5;
             let p = this.pos;
-            if (App.keys['x'])
+            if (App.key('x'))
                 speed *= 10;
-            if (App.keys['w'])
+            if (App.key('w'))
                 p[1] -= speed;
-            if (App.keys['s'])
+            if (App.key('s'))
                 p[1] += speed;
-            if (App.keys['a'])
+            if (App.key('a'))
                 p[0] += speed;
-            if (App.keys['d'])
+            if (App.key('d'))
                 p[0] -= speed;
             Renderer.scene.position.set(p[0], p[1], 0);
         }
@@ -55,7 +54,7 @@ var Game2;
             crunch += `num drawables: ${Game.Drawable.Active} / ${Game.Drawable.Num}<br />`;
             App.sethtml('.stats', crunch);
         }
-        init() {
+        start() {
             globals.ply = this.ply();
             this.add(globals.ply);
         }

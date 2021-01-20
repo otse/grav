@@ -17,7 +17,6 @@ namespace Game2 {
 		pos: Vec2 = [0, 0];
 		static make() {
 			globals.wlrd = new World;
-			globals.wlrd.init();
 		}
 		constructor() {
 		}
@@ -40,11 +39,11 @@ namespace Game2 {
 		move() {
 			let speed = 5;
 			let p = this.pos;
-			if (App.keys['x']) speed *= 10;
-			if (App.keys['w']) p[1] -= speed;
-			if (App.keys['s']) p[1] += speed;
-			if (App.keys['a']) p[0] += speed;
-			if (App.keys['d']) p[0] -= speed;
+			if (App.key('x')) speed *= 10;
+			if (App.key('w')) p[1] -= speed;
+			if (App.key('s')) p[1] += speed;
+			if (App.key('a')) p[0] += speed;
+			if (App.key('d')) p[0] -= speed;
 			Renderer.scene.position.set(p[0], p[1], 0);
 		}
 		stats() {
@@ -54,7 +53,7 @@ namespace Game2 {
 			crunch += `num drawables: ${Game.Drawable.Active} / ${Game.Drawable.Num}<br />`;
 			App.sethtml('.stats', crunch);
 		}
-		init() {
+		start() {
 			globals.ply = this.ply();
 			this.add(globals.ply);
 		}
