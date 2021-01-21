@@ -12,18 +12,17 @@ namespace Game3 {
 	}
 	export class Ping extends Game.Obj {
 		constructor() {
-            super();
-        }
-        done() {
-			let drawable = new Game.Drawable();
-			drawable.obj = this;
+			super();
+		}
+		done() {
+			let drawable = new Game.Drawable(this);
 			drawable.done();
-			let shape = new Game.Quad();
-            shape.img = 'redfighter0005';
-            shape.drawable = drawable;
+			let shape = new Game.Quad(drawable);
+			shape.img = 'redfighter0005';
 			shape.done();
 			this.drawable = drawable;
 			this.drawable.shape = shape;
+			super.done();
 		}
 	}
 }

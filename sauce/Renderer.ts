@@ -33,7 +33,7 @@ void main() {
 
 namespace Renderer {
 
-	export const CORRECT_OS_DPI = false;
+	export const DPI_UPSCALED_RT = true;
 
 	export var ndpi;
 	export var delta = 0;
@@ -108,11 +108,8 @@ namespace Renderer {
 
 		ndpi = window.devicePixelRatio;
 
-		console.log(`window innerWidth, innerHeight ${window.innerWidth} x ${window.innerHeight}`);
-
-		if (ndpi > 1) {
-			console.warn('Dpi i> 1. Game may scale.');
-		}
+		if (!DPI_UPSCALED_RT)
+			ndpi = 1;
 
 		target = new WebGLRenderTarget(
 			window.innerWidth, window.innerHeight,
@@ -152,20 +149,20 @@ namespace Renderer {
 		(window as any).Renderer = Renderer;
 	}
 
-	export var w, h, w2, h2, w3, h3;
+	export var w, h, w2, h2;
 
 	function onWindowResize() {
-		w = window.innerWidth;
-		h = window.innerHeight;
-		w2 = w * ndpi;
-		h2 = h * ndpi;
-		w3 = w2 - (w2 - w);
-		h3 = h2 - (h2 - h);
-		if (w2 % 2 != 0) {
-			w2 -= 1;
-		}
-		if (h2 % 2 != 0) {
-			h2 -= 1;
+		w = w2 = window.innerWidth;
+		h = h2 = window.innerHeight;
+		if (DPI_UPSCALED_RT) {
+			w2 = w * ndpi;
+			h2 = h * ndpi;
+			if (w2 % 2 != 0) {
+				w2 -= 1;
+			}
+			if (h2 % 2 != 0) {
+				h2 -= 1;
+			}
 		}
 		console.log(`window inner [${w}, ${h}], new is [${w2}, ${h2}]`);
 		target.setSize(w2, h2);

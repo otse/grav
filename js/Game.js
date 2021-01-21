@@ -1,10 +1,14 @@
 import { Mesh, PlaneBufferGeometry, MeshBasicMaterial } from "three";
+import aabb2 from "./Aabb2";
+import Pts from "./Pts";
 import Renderer from "./Renderer";
 var Game;
 (function (Game) {
     class Obj {
         constructor() {
             this.wpos = [0, 0];
+            this.rpos = [0, 0];
+            this.size = [100, 100];
             Obj.Num++;
         }
         delete() {
@@ -26,15 +30,32 @@ var Game;
             // implement
             (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.update();
         }
+        done() {
+            // implement
+            this.rpos = [...this.wpos];
+            this.bound();
+        }
+        bound() {
+            let div = Pts.divide(this.size, 2);
+            this.aabb = new aabb2(Pts.inv(div), div);
+            this.aabb.translate(this.wpos);
+        }
+        moused(mouse) {
+            var _a;
+            if ((_a = this.aabb) === null || _a === void 0 ? void 0 : _a.test(new aabb2(mouse, mouse)))
+                return true;
+        }
     }
     Obj.Num = 0;
     Obj.Active = 0;
     Game.Obj = Obj;
     class Drawable {
-        constructor() {
+        constructor(obj) {
+            this.obj = obj;
             Drawable.Num++;
         }
         done() {
+            // leave empty
         }
         update() {
             var _a;
@@ -59,9 +80,8 @@ var Game;
     Drawable.Active = 0;
     Game.Drawable = Drawable;
     class Shape {
-        constructor() {
-            this.rpos = [0, 0];
-            this.tiedToObj = true; // tied to wpos
+        constructor(drawable) {
+            this.drawable = drawable;
         }
         done() {
             // implement
@@ -78,22 +98,16 @@ var Game;
     }
     Game.Shape = Shape;
     class Quad extends Shape {
-        constructor() {
-            super();
+        constructor(drawable) {
+            super(drawable);
             this.img = 'forgot to set';
-            this.w = 100;
-            this.h = 100;
         }
         done() {
         }
         update() {
-            var _a, _b, _c, _d;
-            if (this.tiedToObj) {
-                this.rpos = ((_b = (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.obj) === null || _b === void 0 ? void 0 : _b.wpos) || [0, 0];
-                //console.log(`set rpos to wpos ${Pts.to_string(this.rpos)}`);
-            }
-            (_c = this.mesh) === null || _c === void 0 ? void 0 : _c.position.fromArray([...this.rpos, 0]);
-            (_d = this.mesh) === null || _d === void 0 ? void 0 : _d.updateMatrix();
+            var _a, _b;
+            (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...this.drawable.obj.rpos, 0]);
+            (_b = this.mesh) === null || _b === void 0 ? void 0 : _b.updateMatrix();
         }
         dispose() {
             var _a, _b;
@@ -101,7 +115,9 @@ var Game;
             (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
         }
         setup() {
-            this.geometry = new PlaneBufferGeometry(this.w, this.h, 2, 2);
+            let w = this.drawable.obj.size[0];
+            let h = this.drawable.obj.size[1];
+            this.geometry = new PlaneBufferGeometry(w, h, 2, 2);
             let map = Renderer.loadtexture(`img/${this.img}.png`);
             this.material = new MeshBasicMaterial({
                 map: map,

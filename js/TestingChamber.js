@@ -17,24 +17,33 @@ var TestingChamber;
     }
     TestingChamber.start = start;
     class TestingSquare extends Game.Obj {
-        static make() {
-            return new TestingSquare;
-        }
         constructor() {
             super();
         }
+        static make() {
+            return new TestingSquare;
+        }
         done() {
-            let drawable = new Game.Drawable();
-            drawable.obj = this;
+            this.size = [100, 100];
+            let drawable = new Game.Drawable(this);
             drawable.done();
-            let shape = new Game.Quad();
-            shape.w = 100;
-            shape.h = 100;
-            shape.drawable = drawable;
-            shape.img = 'test100';
-            shape.done();
+            let quad = new Game.Quad(drawable);
+            quad.img = 'test100';
+            quad.done();
             this.drawable = drawable;
-            this.drawable.shape = shape;
+            this.drawable.shape = quad;
+            this.quad = quad;
+            super.done();
+        }
+        update() {
+            if (this.moused(Game2.globals.wlrd.mpos)) {
+                console.log('hover testing square');
+                this.quad.material.color.set('red');
+            }
+            else {
+                this.quad.material.color.set('white');
+                //console.log('boo boo meadow');
+            }
         }
     }
     TestingChamber.TestingSquare = TestingSquare;

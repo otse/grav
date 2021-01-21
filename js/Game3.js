@@ -9,15 +9,14 @@ var Game3;
             super();
         }
         done() {
-            let drawable = new Game.Drawable();
-            drawable.obj = this;
+            let drawable = new Game.Drawable(this);
             drawable.done();
-            let shape = new Game.Quad();
+            let shape = new Game.Quad(drawable);
             shape.img = 'redfighter0005';
-            shape.drawable = drawable;
             shape.done();
             this.drawable = drawable;
             this.drawable.shape = shape;
+            super.done();
         }
     }
     Game3.Ping = Ping;

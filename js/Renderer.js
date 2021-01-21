@@ -25,7 +25,7 @@ void main() {
 // three quarter
 var Renderer;
 (function (Renderer) {
-    Renderer.CORRECT_OS_DPI = false;
+    Renderer.DPI_UPSCALED_RT = true;
     Renderer.delta = 0;
     //export var ambientLight: AmbientLight
     //export var directionalLight: DirectionalLight
@@ -66,10 +66,8 @@ var Renderer;
         Renderer.scene2 = new Scene();
         Renderer.rttscene = new Scene();
         Renderer.ndpi = window.devicePixelRatio;
-        console.log(`window innerWidth, innerHeight ${window.innerWidth} x ${window.innerHeight}`);
-        if (Renderer.ndpi > 1) {
-            console.warn('Dpi i> 1. Game may scale.');
-        }
+        if (!Renderer.DPI_UPSCALED_RT)
+            Renderer.ndpi = 1;
         Renderer.target = new WebGLRenderTarget(window.innerWidth, window.innerHeight, {
             minFilter: THREE.NearestFilter,
             magFilter: THREE.NearestFilter,
@@ -99,17 +97,17 @@ var Renderer;
     }
     Renderer.init = init;
     function onWindowResize() {
-        Renderer.w = window.innerWidth;
-        Renderer.h = window.innerHeight;
-        Renderer.w2 = Renderer.w * Renderer.ndpi;
-        Renderer.h2 = Renderer.h * Renderer.ndpi;
-        Renderer.w3 = Renderer.w2 - (Renderer.w2 - Renderer.w);
-        Renderer.h3 = Renderer.h2 - (Renderer.h2 - Renderer.h);
-        if (Renderer.w2 % 2 != 0) {
-            Renderer.w2 -= 1;
-        }
-        if (Renderer.h2 % 2 != 0) {
-            Renderer.h2 -= 1;
+        Renderer.w = Renderer.w2 = window.innerWidth;
+        Renderer.h = Renderer.h2 = window.innerHeight;
+        if (Renderer.DPI_UPSCALED_RT) {
+            Renderer.w2 = Renderer.w * Renderer.ndpi;
+            Renderer.h2 = Renderer.h * Renderer.ndpi;
+            if (Renderer.w2 % 2 != 0) {
+                Renderer.w2 -= 1;
+            }
+            if (Renderer.h2 % 2 != 0) {
+                Renderer.h2 -= 1;
+            }
         }
         console.log(`window inner [${Renderer.w}, ${Renderer.h}], new is [${Renderer.w2}, ${Renderer.h2}]`);
         Renderer.target.setSize(Renderer.w2, Renderer.h2);

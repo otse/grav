@@ -16,6 +16,7 @@ namespace Game2 {
 		objs: Game.Obj[] = [];
 		view: Vec2 = [0, 0];
 		pos: Vec2 = [0, 0];
+		mpos: Vec2 = [0, 0];
 		static make() {
 			globals.wlrd = new World;
 		}
@@ -31,23 +32,23 @@ namespace Game2 {
 				this.objs.splice(-1, 1);
 		}
 		update() {
-			this.click();
 			this.move();
+			this.mouse();
 			this.stats();
 			for (let obj of this.objs) {
 				obj.update();
 			}
 		}
-		click() {
+		mouse() {
+			let mouse = App.mouse();
+			mouse = Pts.subtract(mouse, Pts.divide([Renderer.w, Renderer.h], 2))
+			mouse = Pts.mult(mouse, Renderer.ndpi);
+			mouse[1] = -mouse[1];
+			this.mpos = Pts.add(this.view, mouse);
 			if (App.button(0) == 1) {
 				console.log('clicked the view');
-				let mouse = App.mouse();
-				mouse = Pts.subtract(mouse, Pts.divide([Renderer.w, Renderer.h], 2))
-				mouse = Pts.mult(mouse, Renderer.ndpi);
-				mouse[1] = -mouse[1];
-				let unprojected = Pts.add(this.view, mouse);
 				let ping = new Game3.Ping;
-				ping.wpos = unprojected;
+				ping.wpos = this.mpos;
 				ping.done();
 				this.add(ping);
 			}
@@ -64,8 +65,8 @@ namespace Game2 {
 		}
 		stats() {
 			let crunch = ``;
-			crunch += `CORRECT_DPI_SCALE: ${Renderer.CORRECT_OS_DPI}<br />`;
-			crunch += `(n)dpi: ${Renderer.ndpi}<br /><br/>`; 
+			crunch += `DPI_UPSCALED_RT: ${Renderer.DPI_UPSCALED_RT}<br />`;
+			crunch += `(n)dpi: ${Renderer.ndpi}<br /><br/>`;
 			crunch += `mouse: ${Pts.to_string(App.mouse())}<br /><br />`;
 			crunch += `world view: ${Pts.to_string(this.view)}<br />`;
 			crunch += `world pos: ${Pts.to_string(this.pos)}<br />`;
@@ -88,15 +89,17 @@ namespace Game2 {
 			super();
 		}
 		done() {
-			let drawable = new Game.Drawable();
-			drawable.obj = this;
+			let drawable = new Game.Drawable(this);
 			drawable.done();
-			let shape = new Game.Quad();
-			shape.drawable = drawable;
-			shape.img = 'redfighter0005';
-			shape.done();
+			let quad = new Game.Quad(drawable);
+			quad.img = 'redfighter0005';
+			quad.done();
 			this.drawable = drawable;
-			this.drawable.shape = shape;
+			this.drawable.shape = quad;
+			super.done();
+		}
+		update() {
+
 		}
 	}
 }

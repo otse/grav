@@ -90,7 +90,7 @@ void main() {
     // three quarter
     var Renderer;
     (function (Renderer) {
-        Renderer.CORRECT_OS_DPI = false;
+        Renderer.DPI_UPSCALED_RT = true;
         Renderer.delta = 0;
         //export var ambientLight: AmbientLight
         //export var directionalLight: DirectionalLight
@@ -131,10 +131,8 @@ void main() {
             Renderer.scene2 = new THREE.Scene();
             Renderer.rttscene = new THREE.Scene();
             Renderer.ndpi = window.devicePixelRatio;
-            console.log(`window innerWidth, innerHeight ${window.innerWidth} x ${window.innerHeight}`);
-            if (Renderer.ndpi > 1) {
-                console.warn('Dpi i> 1. Game may scale.');
-            }
+            if (!Renderer.DPI_UPSCALED_RT)
+                Renderer.ndpi = 1;
             Renderer.target = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, {
                 minFilter: THREE__default['default'].NearestFilter,
                 magFilter: THREE__default['default'].NearestFilter,
@@ -164,17 +162,17 @@ void main() {
         }
         Renderer.init = init;
         function onWindowResize() {
-            Renderer.w = window.innerWidth;
-            Renderer.h = window.innerHeight;
-            Renderer.w2 = Renderer.w * Renderer.ndpi;
-            Renderer.h2 = Renderer.h * Renderer.ndpi;
-            Renderer.w3 = Renderer.w2 - (Renderer.w2 - Renderer.w);
-            Renderer.h3 = Renderer.h2 - (Renderer.h2 - Renderer.h);
-            if (Renderer.w2 % 2 != 0) {
-                Renderer.w2 -= 1;
-            }
-            if (Renderer.h2 % 2 != 0) {
-                Renderer.h2 -= 1;
+            Renderer.w = Renderer.w2 = window.innerWidth;
+            Renderer.h = Renderer.h2 = window.innerHeight;
+            if (Renderer.DPI_UPSCALED_RT) {
+                Renderer.w2 = Renderer.w * Renderer.ndpi;
+                Renderer.h2 = Renderer.h * Renderer.ndpi;
+                if (Renderer.w2 % 2 != 0) {
+                    Renderer.w2 -= 1;
+                }
+                if (Renderer.h2 % 2 != 0) {
+                    Renderer.h2 -= 1;
+                }
             }
             console.log(`window inner [${Renderer.w}, ${Renderer.h}], new is [${Renderer.w2}, ${Renderer.h2}]`);
             Renderer.target.setSize(Renderer.w2, Renderer.h2);
@@ -222,11 +220,55 @@ void main() {
     })(Renderer || (Renderer = {}));
     var Renderer$1 = Renderer;
 
+    var TEST;
+    (function (TEST) {
+        TEST[TEST["Outside"] = 0] = "Outside";
+        TEST[TEST["Inside"] = 1] = "Inside";
+        TEST[TEST["Overlap"] = 2] = "Overlap";
+    })(TEST || (TEST = {}));
+    class aabb2 {
+        constructor(a, b) {
+            this.min = this.max = [...a];
+            if (b) {
+                this.extend(b);
+            }
+        }
+        static dupe(bb) {
+            return new aabb2(bb.min, bb.max);
+        }
+        extend(v) {
+            this.min = Pts.min(this.min, v);
+            this.max = Pts.max(this.max, v);
+        }
+        diagonal() {
+            return Pts.subtract(this.max, this.min);
+        }
+        center() {
+            return Pts.add(this.min, Pts.mult(this.diagonal(), 0.5));
+        }
+        translate(v) {
+            this.min = Pts.add(this.min, v);
+            this.max = Pts.add(this.max, v);
+        }
+        test(b) {
+            if (this.max[0] < b.min[0] || this.min[0] > b.max[0] ||
+                this.max[1] < b.min[1] || this.min[1] > b.max[1])
+                return 0;
+            if (this.min[0] <= b.min[0] && this.max[0] >= b.max[0] &&
+                this.min[1] <= b.min[1] && this.max[1] >= b.max[1])
+                return 1;
+            return 2;
+        }
+    }
+    aabb2.TEST = TEST;
+
     var Game;
     (function (Game) {
         class Obj {
             constructor() {
                 this.wpos = [0, 0];
+                this.rpos = [0, 0];
+                this.size = [100, 100];
                 Obj.Num++;
             }
             delete() {
@@ -248,15 +290,32 @@ void main() {
                 // implement
                 (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.update();
             }
+            done() {
+                // implement
+                this.rpos = [...this.wpos];
+                this.bound();
+            }
+            bound() {
+                let div = Pts.divide(this.size, 2);
+                this.aabb = new aabb2(Pts.inv(div), div);
+                this.aabb.translate(this.wpos);
+            }
+            moused(mouse) {
+                var _a;
+                if ((_a = this.aabb) === null || _a === void 0 ? void 0 : _a.test(new aabb2(mouse, mouse)))
+                    return true;
+            }
         }
         Obj.Num = 0;
         Obj.Active = 0;
         Game.Obj = Obj;
         class Drawable {
-            constructor() {
+            constructor(obj) {
+                this.obj = obj;
                 Drawable.Num++;
             }
             done() {
+                // leave empty
             }
             update() {
                 var _a;
@@ -281,9 +340,8 @@ void main() {
         Drawable.Active = 0;
         Game.Drawable = Drawable;
         class Shape {
-            constructor() {
-                this.rpos = [0, 0];
-                this.tiedToObj = true; // tied to wpos
+            constructor(drawable) {
+                this.drawable = drawable;
             }
             done() {
                 // implement
@@ -300,22 +358,16 @@ void main() {
         }
         Game.Shape = Shape;
         class Quad extends Shape {
-            constructor() {
-                super();
+            constructor(drawable) {
+                super(drawable);
                 this.img = 'forgot to set';
-                this.w = 100;
-                this.h = 100;
             }
             done() {
             }
             update() {
-                var _a, _b, _c, _d;
-                if (this.tiedToObj) {
-                    this.rpos = ((_b = (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.obj) === null || _b === void 0 ? void 0 : _b.wpos) || [0, 0];
-                    //console.log(`set rpos to wpos ${Pts.to_string(this.rpos)}`);
-                }
-                (_c = this.mesh) === null || _c === void 0 ? void 0 : _c.position.fromArray([...this.rpos, 0]);
-                (_d = this.mesh) === null || _d === void 0 ? void 0 : _d.updateMatrix();
+                var _a, _b;
+                (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...this.drawable.obj.rpos, 0]);
+                (_b = this.mesh) === null || _b === void 0 ? void 0 : _b.updateMatrix();
             }
             dispose() {
                 var _a, _b;
@@ -323,7 +375,9 @@ void main() {
                 (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
             }
             setup() {
-                this.geometry = new THREE.PlaneBufferGeometry(this.w, this.h, 2, 2);
+                let w = this.drawable.obj.size[0];
+                let h = this.drawable.obj.size[1];
+                this.geometry = new THREE.PlaneBufferGeometry(w, h, 2, 2);
                 let map = Renderer$1.loadtexture(`img/${this.img}.png`);
                 this.material = new THREE.MeshBasicMaterial({
                     map: map,
@@ -350,15 +404,14 @@ void main() {
                 super();
             }
             done() {
-                let drawable = new Game$1.Drawable();
-                drawable.obj = this;
+                let drawable = new Game$1.Drawable(this);
                 drawable.done();
-                let shape = new Game$1.Quad();
+                let shape = new Game$1.Quad(drawable);
                 shape.img = 'redfighter0005';
-                shape.drawable = drawable;
                 shape.done();
                 this.drawable = drawable;
                 this.drawable.shape = shape;
+                super.done();
             }
         }
         Game3.Ping = Ping;
@@ -375,6 +428,7 @@ void main() {
                 this.objs = [];
                 this.view = [0, 0];
                 this.pos = [0, 0];
+                this.mpos = [0, 0];
             }
             static make() {
                 globals.wlrd = new World;
@@ -389,23 +443,23 @@ void main() {
                     this.objs.splice(-1, 1);
             }
             update() {
-                this.click();
                 this.move();
+                this.mouse();
                 this.stats();
                 for (let obj of this.objs) {
                     obj.update();
                 }
             }
-            click() {
+            mouse() {
+                let mouse = App$1.mouse();
+                mouse = Pts.subtract(mouse, Pts.divide([Renderer$1.w, Renderer$1.h], 2));
+                mouse = Pts.mult(mouse, Renderer$1.ndpi);
+                mouse[1] = -mouse[1];
+                this.mpos = Pts.add(this.view, mouse);
                 if (App$1.button(0) == 1) {
                     console.log('clicked the view');
-                    let mouse = App$1.mouse();
-                    mouse = Pts.subtract(mouse, Pts.divide([Renderer$1.w, Renderer$1.h], 2));
-                    mouse = Pts.mult(mouse, Renderer$1.ndpi);
-                    mouse[1] = -mouse[1];
-                    let unprojected = Pts.add(this.view, mouse);
                     let ping = new Game3$1.Ping;
-                    ping.wpos = unprojected;
+                    ping.wpos = this.mpos;
                     ping.done();
                     this.add(ping);
                 }
@@ -427,7 +481,7 @@ void main() {
             }
             stats() {
                 let crunch = ``;
-                crunch += `CORRECT_DPI_SCALE: ${Renderer$1.CORRECT_OS_DPI}<br />`;
+                crunch += `DPI_UPSCALED_RT: ${Renderer$1.DPI_UPSCALED_RT}<br />`;
                 crunch += `(n)dpi: ${Renderer$1.ndpi}<br /><br/>`;
                 crunch += `mouse: ${Pts.to_string(App$1.mouse())}<br /><br />`;
                 crunch += `world view: ${Pts.to_string(this.view)}<br />`;
@@ -452,15 +506,16 @@ void main() {
                 super();
             }
             done() {
-                let drawable = new Game$1.Drawable();
-                drawable.obj = this;
+                let drawable = new Game$1.Drawable(this);
                 drawable.done();
-                let shape = new Game$1.Quad();
-                shape.drawable = drawable;
-                shape.img = 'redfighter0005';
-                shape.done();
+                let quad = new Game$1.Quad(drawable);
+                quad.img = 'redfighter0005';
+                quad.done();
                 this.drawable = drawable;
-                this.drawable.shape = shape;
+                this.drawable.shape = quad;
+                super.done();
+            }
+            update() {
             }
         }
         Game2.Ply = Ply;
@@ -484,24 +539,33 @@ void main() {
         }
         TestingChamber.start = start;
         class TestingSquare extends Game$1.Obj {
-            static make() {
-                return new TestingSquare;
-            }
             constructor() {
                 super();
             }
+            static make() {
+                return new TestingSquare;
+            }
             done() {
-                let drawable = new Game$1.Drawable();
-                drawable.obj = this;
+                this.size = [100, 100];
+                let drawable = new Game$1.Drawable(this);
                 drawable.done();
-                let shape = new Game$1.Quad();
-                shape.w = 100;
-                shape.h = 100;
-                shape.drawable = drawable;
-                shape.img = 'test100';
-                shape.done();
+                let quad = new Game$1.Quad(drawable);
+                quad.img = 'test100';
+                quad.done();
                 this.drawable = drawable;
-                this.drawable.shape = shape;
+                this.drawable.shape = quad;
+                this.quad = quad;
+                super.done();
+            }
+            update() {
+                if (this.moused(Game2$1.globals.wlrd.mpos)) {
+                    console.log('hover testing square');
+                    this.quad.material.color.set('red');
+                }
+                else {
+                    this.quad.material.color.set('white');
+                    //console.log('boo boo meadow');
+                }
             }
         }
         TestingChamber.TestingSquare = TestingSquare;

@@ -1,4 +1,5 @@
 import { Mesh, PlaneBufferGeometry, MeshBasicMaterial, Vector3, Color } from "three";
+import aabb2 from "./Aabb2";
 import Grav from "./Grav";
 
 import Pts from "./Pts";
@@ -8,7 +9,9 @@ namespace Game {
 	export class Obj { // extend me
 		static Num = 0;
 		static Active = 0;
-		wpos: Vec2 = [0, 0]
+		wpos: Vec2 = [0, 0];
+		rpos: Vec2 = [0, 0];
+		size: Vec2 = [100, 100];
 		drawable: Drawable | undefined;
 		constructor() {
 			Obj.Num++;
@@ -29,16 +32,31 @@ namespace Game {
 			// implement
 			this.drawable?.update();
 		}
+		done() {
+			// implement
+			this.rpos = [...this.wpos];
+			this.bound();
+		}
+		aabb: aabb2 | undefined;
+		bound() {
+			let div = Pts.divide(this.size, 2);
+			this.aabb = new aabb2(Pts.inv(div), div);
+			this.aabb.translate(this.wpos);
+		}
+		moused(mouse: Vec2) {
+			if (this.aabb?.test(new aabb2(mouse, mouse)))
+				return true;
+		}
 	}
 	export class Drawable {
 		static Num = 0;
 		static Active = 0;
-		obj: Obj | undefined;
 		shape: Shape | undefined;
-		constructor() {
+		constructor(public readonly obj: Obj) {
 			Drawable.Num++;
 		}
 		done() {
+			// leave empty
 		}
 		update() {
 			this.shape?.update();
@@ -55,12 +73,10 @@ namespace Game {
 			this.shape?.dispose();
 			Drawable.Active--;
 		}
+		
 	}
 	export class Shape {
-		rpos: Vec2 = [0, 0];
-		tiedToObj = true; // tied to wpos
-		drawable: Drawable | undefined;
-		constructor() {
+		constructor(public readonly drawable: Drawable) {
 
 		}
 		done() {
@@ -79,21 +95,15 @@ namespace Game {
 	export class Quad extends Shape {
 		img: string = 'forgot to set';
 		mesh: Mesh | undefined;
-		material: MeshBasicMaterial | undefined;
-		geometry: PlaneBufferGeometry | undefined;
-		w = 100;
-		h = 100;
-		constructor() {
-			super();
+		material: MeshBasicMaterial;
+		geometry: PlaneBufferGeometry;
+		constructor(drawable: Drawable) {
+			super(drawable);
 		}
 		done() {
 		}
-		update() {			
-			if (this.tiedToObj) {
-				this.rpos = this.drawable?.obj?.wpos || [0, 0];
-				//console.log(`set rpos to wpos ${Pts.to_string(this.rpos)}`);
-			}
-			this.mesh?.position.fromArray([...this.rpos, 0]);
+		update() {
+			this.mesh?.position.fromArray([...this.drawable.obj.rpos, 0]);
 			this.mesh?.updateMatrix();
 		}
 		dispose() {
@@ -101,7 +111,9 @@ namespace Game {
 			this.material?.dispose();
 		}
 		setup() {
-			this.geometry = new PlaneBufferGeometry(this.w, this.h, 2, 2);
+			let w = this.drawable.obj.size[0];
+			let h = this.drawable.obj.size[1];
+			this.geometry = new PlaneBufferGeometry(w, h, 2, 2);
 			let map = Renderer.loadtexture(`img/${this.img}.png`);
 			this.material = new MeshBasicMaterial({
 				map: map,
