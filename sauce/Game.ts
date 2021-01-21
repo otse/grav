@@ -81,6 +81,8 @@ namespace Game {
 		mesh: Mesh | undefined;
 		material: MeshBasicMaterial | undefined;
 		geometry: PlaneBufferGeometry | undefined;
+		w = 100;
+		h = 100;
 		constructor() {
 			super();
 		}
@@ -99,7 +101,7 @@ namespace Game {
 			this.material?.dispose();
 		}
 		setup() {
-			this.geometry = new PlaneBufferGeometry(100, 100, 2, 2);
+			this.geometry = new PlaneBufferGeometry(this.w, this.h, 2, 2);
 			let map = Renderer.loadtexture(`img/${this.img}.png`);
 			this.material = new MeshBasicMaterial({
 				map: map,

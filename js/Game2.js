@@ -37,10 +37,11 @@ var Game2;
         click() {
             if (App.button(0) == 1) {
                 console.log('clicked the view');
-                let inverted = App.mouse();
-                inverted = Pts.subtract(inverted, Pts.divide([Renderer.w, Renderer.h], 2));
-                inverted[1] = -inverted[1];
-                let unprojected = Pts.add(this.view, inverted);
+                let mouse = App.mouse();
+                mouse = Pts.subtract(mouse, Pts.divide([Renderer.w, Renderer.h], 2));
+                mouse = Pts.mult(mouse, Renderer.ndpi);
+                mouse[1] = -mouse[1];
+                let unprojected = Pts.add(this.view, mouse);
                 let ping = new Game3.Ping;
                 ping.wpos = unprojected;
                 ping.done();
@@ -64,6 +65,8 @@ var Game2;
         }
         stats() {
             let crunch = ``;
+            crunch += `CORRECT_DPI_SCALE: ${Renderer.CORRECT_OS_DPI}<br />`;
+            crunch += `(n)dpi: ${Renderer.ndpi}<br /><br/>`;
             crunch += `mouse: ${Pts.to_string(App.mouse())}<br /><br />`;
             crunch += `world view: ${Pts.to_string(this.view)}<br />`;
             crunch += `world pos: ${Pts.to_string(this.pos)}<br />`;
@@ -72,17 +75,17 @@ var Game2;
             App.sethtml('.stats', crunch);
         }
         start() {
-            globals.ply = this.ply();
+            globals.ply = Ply.make();
             this.add(globals.ply);
-        }
-        ply() {
-            let ply = new Game2.Ply;
-            ply.done();
-            return ply;
         }
     }
     Game2.World = World;
     class Ply extends Game.Obj {
+        static make() {
+            let ply = new Ply;
+            ply.done();
+            return ply;
+        }
         constructor() {
             super();
         }

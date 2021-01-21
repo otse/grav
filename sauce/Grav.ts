@@ -69,7 +69,7 @@ export namespace Grav {
 		console.log('grav starting');
 		Game2.globals.wlrd.start();
 		if (window.location.href.indexOf("#testingchamber") != -1)
-			TestingChamber.Adept();
+			TestingChamber.start();
 		if (window.location.href.indexOf("#novar") != -1)
 			NO_VAR = false;
 		//setTimeout(() => Board.messageslide('', 'You get one cheap set of shoes, and a well-kept shovel.'), 1000);

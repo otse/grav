@@ -25,6 +25,7 @@ void main() {
 // three quarter
 var Renderer;
 (function (Renderer) {
+    Renderer.CORRECT_OS_DPI = false;
     Renderer.delta = 0;
     //export var ambientLight: AmbientLight
     //export var directionalLight: DirectionalLight
@@ -100,8 +101,8 @@ var Renderer;
     function onWindowResize() {
         Renderer.w = window.innerWidth;
         Renderer.h = window.innerHeight;
-        Renderer.w2 = Renderer.w; // * ndpi;
-        Renderer.h2 = Renderer.h; // * ndpi;
+        Renderer.w2 = Renderer.w * Renderer.ndpi;
+        Renderer.h2 = Renderer.h * Renderer.ndpi;
         Renderer.w3 = Renderer.w2 - (Renderer.w2 - Renderer.w);
         Renderer.h3 = Renderer.h2 - (Renderer.h2 - Renderer.h);
         if (Renderer.w2 % 2 != 0) {
@@ -110,6 +111,7 @@ var Renderer;
         if (Renderer.h2 % 2 != 0) {
             Renderer.h2 -= 1;
         }
+        console.log(`window inner [${Renderer.w}, ${Renderer.h}], new is [${Renderer.w2}, ${Renderer.h2}]`);
         Renderer.target.setSize(Renderer.w2, Renderer.h2);
         Renderer.plane = new PlaneBufferGeometry(Renderer.w2, Renderer.h2);
         if (Renderer.quadPost)

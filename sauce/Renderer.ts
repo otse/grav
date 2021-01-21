@@ -33,6 +33,8 @@ void main() {
 
 namespace Renderer {
 
+	export const CORRECT_OS_DPI = false;
+
 	export var ndpi;
 	export var delta = 0;
 
@@ -155,8 +157,8 @@ namespace Renderer {
 	function onWindowResize() {
 		w = window.innerWidth;
 		h = window.innerHeight;
-		w2 = w;// * ndpi;
-		h2 = h;// * ndpi;
+		w2 = w * ndpi;
+		h2 = h * ndpi;
 		w3 = w2 - (w2 - w);
 		h3 = h2 - (h2 - h);
 		if (w2 % 2 != 0) {
@@ -165,6 +167,7 @@ namespace Renderer {
 		if (h2 % 2 != 0) {
 			h2 -= 1;
 		}
+		console.log(`window inner [${w}, ${h}], new is [${w2}, ${h2}]`);
 		target.setSize(w2, h2);
 		plane = new PlaneBufferGeometry(w2, h2);
 		if (quadPost)

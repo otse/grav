@@ -90,6 +90,7 @@ void main() {
     // three quarter
     var Renderer;
     (function (Renderer) {
+        Renderer.CORRECT_OS_DPI = false;
         Renderer.delta = 0;
         //export var ambientLight: AmbientLight
         //export var directionalLight: DirectionalLight
@@ -165,8 +166,8 @@ void main() {
         function onWindowResize() {
             Renderer.w = window.innerWidth;
             Renderer.h = window.innerHeight;
-            Renderer.w2 = Renderer.w; // * ndpi;
-            Renderer.h2 = Renderer.h; // * ndpi;
+            Renderer.w2 = Renderer.w * Renderer.ndpi;
+            Renderer.h2 = Renderer.h * Renderer.ndpi;
             Renderer.w3 = Renderer.w2 - (Renderer.w2 - Renderer.w);
             Renderer.h3 = Renderer.h2 - (Renderer.h2 - Renderer.h);
             if (Renderer.w2 % 2 != 0) {
@@ -175,6 +176,7 @@ void main() {
             if (Renderer.h2 % 2 != 0) {
                 Renderer.h2 -= 1;
             }
+            console.log(`window inner [${Renderer.w}, ${Renderer.h}], new is [${Renderer.w2}, ${Renderer.h2}]`);
             Renderer.target.setSize(Renderer.w2, Renderer.h2);
             Renderer.plane = new THREE.PlaneBufferGeometry(Renderer.w2, Renderer.h2);
             if (Renderer.quadPost)
@@ -301,6 +303,8 @@ void main() {
             constructor() {
                 super();
                 this.img = 'forgot to set';
+                this.w = 100;
+                this.h = 100;
             }
             done() {
             }
@@ -319,7 +323,7 @@ void main() {
                 (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
             }
             setup() {
-                this.geometry = new THREE.PlaneBufferGeometry(100, 100, 2, 2);
+                this.geometry = new THREE.PlaneBufferGeometry(this.w, this.h, 2, 2);
                 let map = Renderer$1.loadtexture(`img/${this.img}.png`);
                 this.material = new THREE.MeshBasicMaterial({
                     map: map,
@@ -395,10 +399,11 @@ void main() {
             click() {
                 if (App$1.button(0) == 1) {
                     console.log('clicked the view');
-                    let inverted = App$1.mouse();
-                    inverted = Pts.subtract(inverted, Pts.divide([Renderer$1.w, Renderer$1.h], 2));
-                    inverted[1] = -inverted[1];
-                    let unprojected = Pts.add(this.view, inverted);
+                    let mouse = App$1.mouse();
+                    mouse = Pts.subtract(mouse, Pts.divide([Renderer$1.w, Renderer$1.h], 2));
+                    mouse = Pts.mult(mouse, Renderer$1.ndpi);
+                    mouse[1] = -mouse[1];
+                    let unprojected = Pts.add(this.view, mouse);
                     let ping = new Game3$1.Ping;
                     ping.wpos = unprojected;
                     ping.done();
@@ -422,6 +427,8 @@ void main() {
             }
             stats() {
                 let crunch = ``;
+                crunch += `CORRECT_DPI_SCALE: ${Renderer$1.CORRECT_OS_DPI}<br />`;
+                crunch += `(n)dpi: ${Renderer$1.ndpi}<br /><br/>`;
                 crunch += `mouse: ${Pts.to_string(App$1.mouse())}<br /><br />`;
                 crunch += `world view: ${Pts.to_string(this.view)}<br />`;
                 crunch += `world pos: ${Pts.to_string(this.pos)}<br />`;
@@ -430,17 +437,17 @@ void main() {
                 App$1.sethtml('.stats', crunch);
             }
             start() {
-                globals.ply = this.ply();
+                globals.ply = Ply.make();
                 this.add(globals.ply);
-            }
-            ply() {
-                let ply = new Game2.Ply;
-                ply.done();
-                return ply;
             }
         }
         Game2.World = World;
         class Ply extends Game$1.Obj {
+            static make() {
+                let ply = new Ply;
+                ply.done();
+                return ply;
+            }
             constructor() {
                 super();
             }
@@ -462,10 +469,42 @@ void main() {
 
     var TestingChamber;
     (function (TestingChamber) {
-        function Adept() {
+        function start() {
             console.log('start testing chamber');
+            console.log('placing squares on game area that should take up 1:1 pixels on screen...');
+            console.log('...regardless of your os or browsers dpi setting');
+            for (let y = 0; y < 50; y++) {
+                for (let x = 0; x < 50; x++) {
+                    let square = TestingSquare.make();
+                    square.wpos = [x * 100, y * 100];
+                    square.done();
+                    Game2$1.globals.wlrd.add(square);
+                }
+            }
         }
-        TestingChamber.Adept = Adept;
+        TestingChamber.start = start;
+        class TestingSquare extends Game$1.Obj {
+            static make() {
+                return new TestingSquare;
+            }
+            constructor() {
+                super();
+            }
+            done() {
+                let drawable = new Game$1.Drawable();
+                drawable.obj = this;
+                drawable.done();
+                let shape = new Game$1.Quad();
+                shape.w = 100;
+                shape.h = 100;
+                shape.drawable = drawable;
+                shape.img = 'test100';
+                shape.done();
+                this.drawable = drawable;
+                this.drawable.shape = shape;
+            }
+        }
+        TestingChamber.TestingSquare = TestingSquare;
     })(TestingChamber || (TestingChamber = {}));
     var TestingChamber$1 = TestingChamber;
 
@@ -538,7 +577,7 @@ void main() {
             console.log('grav starting');
             Game2$1.globals.wlrd.start();
             if (window.location.href.indexOf("#testingchamber") != -1)
-                TestingChamber$1.Adept();
+                TestingChamber$1.start();
             if (window.location.href.indexOf("#novar") != -1)
                 Grav.NO_VAR = false;
             //setTimeout(() => Board.messageslide('', 'You get one cheap set of shoes, and a well-kept shovel.'), 1000);

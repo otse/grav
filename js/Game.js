@@ -81,6 +81,8 @@ var Game;
         constructor() {
             super();
             this.img = 'forgot to set';
+            this.w = 100;
+            this.h = 100;
         }
         done() {
         }
@@ -99,7 +101,7 @@ var Game;
             (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
         }
         setup() {
-            this.geometry = new PlaneBufferGeometry(100, 100, 2, 2);
+            this.geometry = new PlaneBufferGeometry(this.w, this.h, 2, 2);
             let map = Renderer.loadtexture(`img/${this.img}.png`);
             this.material = new MeshBasicMaterial({
                 map: map,
