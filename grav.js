@@ -307,7 +307,6 @@ void main() {
                 let s = this.atnullable(x, y);
                 if (s)
                     return s;
-                //console.log('galaxy make', [x, y]);
                 s = this.arrays[y][x] = new Sector(x, y, this);
                 return s;
             }
@@ -343,18 +342,23 @@ void main() {
                     return;
                 for (let obj of this.objs)
                     obj.show();
-                return this.active = true;
+                this.active = true;
+                Sector.Active++;
+                return true;
             }
             hide() {
                 if (!this.active)
                     return;
                 for (let obj of this.objs)
                     obj.hide();
-                return this.active = false;
+                this.active = false;
+                Sector.Active--;
+                return true;
             }
             objs_() { return this.objs; }
         }
         Sector.Num = 0;
+        Sector.Active = 0;
         Game.Sector = Sector;
         class Center {
             constructor(galaxy) {
@@ -369,9 +373,11 @@ void main() {
                     for (let x = -half; x < half; x++) {
                         let pos = pts.add(this.big, [x, y]);
                         let s = this.galaxy.atnullable(pos[0], pos[1]);
-                        if (s === null || s === void 0 ? void 0 : s.show()) {
+                        if (!s)
+                            continue;
+                        if (!s.active)
                             this.shown.push(s);
-                        }
+                        s.show();
                     }
                 }
             }
@@ -388,6 +394,7 @@ void main() {
         Game.Center = Center;
         class Obj {
             constructor() {
+                this.active = false;
                 this.wpos = [0, 0];
                 this.rpos = [0, 0];
                 this.size = [100, 100];
@@ -399,12 +406,18 @@ void main() {
             }
             show() {
                 var _a;
+                if (this.active)
+                    return;
                 (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.show();
+                this.active = true;
                 Obj.Active++;
             }
             hide() {
                 var _a;
+                if (!this.active)
+                    return;
                 (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.hide();
+                this.active = false;
                 Obj.Active--;
             }
             update() {
@@ -619,10 +632,10 @@ void main() {
                 let crunch = ``;
                 crunch += `DPI_UPSCALED_RT: ${Renderer$1.DPI_UPSCALED_RT}<br />`;
                 crunch += `(n)dpi: ${Renderer$1.ndpi}<br />`;
-                crunch += `sectors: ${globals.galaxy.center.shown.length} / ${Game$1.Sector.Num}<br /><br/>`;
                 crunch += `mouse: ${pts.to_string(App$1.mouse())}<br /><br />`;
                 crunch += `world view: ${pts.to_string(this.view)}<br />`;
-                crunch += `world pos: ${pts.to_string(this.pos)}<br />`;
+                crunch += `world pos: ${pts.to_string(this.pos)}<br /><br />`;
+                crunch += `sectors: ${Game$1.Sector.Active} / ${Game$1.Sector.Num}<br />`;
                 crunch += `num game objs: ${Game$1.Obj.Active} / ${Game$1.Obj.Num}<br />`;
                 crunch += `num drawables: ${Game$1.Drawable.Active} / ${Game$1.Drawable.Num}<br />`;
                 App$1.sethtml('.stats', crunch);

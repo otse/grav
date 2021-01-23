@@ -72,10 +72,10 @@ namespace Game2 {
 			let crunch = ``;
 			crunch += `DPI_UPSCALED_RT: ${Renderer.DPI_UPSCALED_RT}<br />`;
 			crunch += `(n)dpi: ${Renderer.ndpi}<br />`;
-			crunch += `sectors: ${globals.galaxy.center.shown.length} / ${Game.Sector.Num}<br /><br/>`;
 			crunch += `mouse: ${pts.to_string(App.mouse())}<br /><br />`;
 			crunch += `world view: ${pts.to_string(this.view)}<br />`;
-			crunch += `world pos: ${pts.to_string(this.pos)}<br />`;
+			crunch += `world pos: ${pts.to_string(this.pos)}<br /><br />`;
+			crunch += `sectors: ${Game.Sector.Active} / ${Game.Sector.Num}<br />`;
 			crunch += `num game objs: ${Game.Obj.Active} / ${Game.Obj.Num}<br />`;
 			crunch += `num drawables: ${Game.Drawable.Active} / ${Game.Drawable.Num}<br />`;
 			App.sethtml('.stats', crunch);

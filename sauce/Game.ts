@@ -40,14 +40,14 @@ namespace Game {
 			let s = this.atnullable(x, y);
 			if (s)
 				return s;
-			//console.log('galaxy make', [x, y]);
 			s = this.arrays[y][x] = new Sector(x, y, this);
 			return s;
 		}
 	}
 	export class Sector {
 		static Num = 0;
-		active = false
+		static Active = 0;
+		active = false;
 		readonly span = 2000;
 		readonly big: Vec2;
 		private readonly objs: Obj[] = [];
@@ -71,14 +71,20 @@ namespace Game {
 			for (let obj of this.objs) obj.tickupdate();
 		}
 		show() {
-			if (this.active) return;
+			if (this.active)
+				return;
 			for (let obj of this.objs) obj.show();
-			return this.active = true;
+			this.active = true;
+			Sector.Active++;
+			return true;
 		}
 		hide() {
-			if (!this.active) return;
+			if (!this.active)
+				return;
 			for (let obj of this.objs) obj.hide();
-			return this.active = false;
+			this.active = false;
+			Sector.Active--;
+			return true;
 		}
 		objs_(): ReadonlyArray<Obj> { return this.objs; }
 	}
@@ -94,9 +100,11 @@ namespace Game {
 				for (let x = -half; x < half; x++) {
 					let pos = pts.add(this.big, [x, y]);
 					let s = this.galaxy.atnullable(pos[0], pos[1]);
-					if (s?.show()) {
+					if (!s)
+						continue;
+					if (!s.active)
 						this.shown.push(s);
-					}
+					s.show();
 				}
 			}
 
@@ -115,6 +123,7 @@ namespace Game {
 	export class Obj { // extend me
 		static Num = 0;
 		static Active = 0;
+		active = false;
 		wpos: Vec2 = [0, 0];
 		rpos: Vec2 = [0, 0];
 		size: Vec2 = [100, 100];
@@ -128,11 +137,17 @@ namespace Game {
 			Obj.Num--;
 		}
 		show() {
+			if (this.active)
+				return;
 			this.drawable?.show();
+			this.active = true;
 			Obj.Active++;
 		}
 		hide() {
+			if (!this.active)
+				return;
 			this.drawable?.hide();
+			this.active = false;
 			Obj.Active--;
 		}
 		update() { // implement
@@ -175,13 +190,15 @@ namespace Game {
 			Drawable.Num--;
 		}
 		show() {
-			if (this.active) return;
+			if (this.active)
+				return;
 			this.shape?.setup();
 			this.active = true;
 			Drawable.Active++;
 		}
 		hide() {
-			if (!this.active) return;
+			if (!this.active)
+				return;
 			this.shape?.dispose();
 			this.active = false;
 			Drawable.Active--;

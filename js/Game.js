@@ -35,7 +35,6 @@ var Game;
             let s = this.atnullable(x, y);
             if (s)
                 return s;
-            //console.log('galaxy make', [x, y]);
             s = this.arrays[y][x] = new Sector(x, y, this);
             return s;
         }
@@ -71,18 +70,23 @@ var Game;
                 return;
             for (let obj of this.objs)
                 obj.show();
-            return this.active = true;
+            this.active = true;
+            Sector.Active++;
+            return true;
         }
         hide() {
             if (!this.active)
                 return;
             for (let obj of this.objs)
                 obj.hide();
-            return this.active = false;
+            this.active = false;
+            Sector.Active--;
+            return true;
         }
         objs_() { return this.objs; }
     }
     Sector.Num = 0;
+    Sector.Active = 0;
     Game.Sector = Sector;
     class Center {
         constructor(galaxy) {
@@ -97,9 +101,11 @@ var Game;
                 for (let x = -half; x < half; x++) {
                     let pos = pts.add(this.big, [x, y]);
                     let s = this.galaxy.atnullable(pos[0], pos[1]);
-                    if (s === null || s === void 0 ? void 0 : s.show()) {
+                    if (!s)
+                        continue;
+                    if (!s.active)
                         this.shown.push(s);
-                    }
+                    s.show();
                 }
             }
         }
@@ -116,6 +122,7 @@ var Game;
     Game.Center = Center;
     class Obj {
         constructor() {
+            this.active = false;
             this.wpos = [0, 0];
             this.rpos = [0, 0];
             this.size = [100, 100];
@@ -127,12 +134,18 @@ var Game;
         }
         show() {
             var _a;
+            if (this.active)
+                return;
             (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.show();
+            this.active = true;
             Obj.Active++;
         }
         hide() {
             var _a;
+            if (!this.active)
+                return;
             (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.hide();
+            this.active = false;
             Obj.Active--;
         }
         update() {
