@@ -1,5 +1,5 @@
 import App from "./App";
-import Pts from "./Pts";
+import pts from "./Pts";
 import Renderer from "./Renderer";
 import Game from "./Game";
 import Game3 from "./Game3";
@@ -8,43 +8,49 @@ var Game2;
     let globals;
     (function (globals) {
     })(globals = Game2.globals || (Game2.globals = {}));
+    function start() {
+        globals.wlrd = Game2.World.make();
+        globals.galaxy = new Game.Galaxy(10);
+    }
+    Game2.start = start;
     class World {
         constructor() {
-            this.objs = [];
+            //objs: Game.Obj[] = [];
             this.view = [0, 0];
             this.pos = [0, 0];
+            this.wpos = [0, 0];
             this.mpos = [0, 0];
         }
         static make() {
-            globals.wlrd = new World;
+            return new World;
+        }
+        chart(big) {
         }
         add(obj) {
-            this.objs.push(obj);
-            obj.show();
+            globals.galaxy.atsmall(obj.wpos).add(obj);
+            //this.objs.push(obj);
+            //obj.show();
         }
         remove(obj) {
-            let i = this.objs.indexOf(obj);
-            if (i != -1)
-                this.objs.splice(-1, 1);
+            var _a;
+            (_a = obj.sector) === null || _a === void 0 ? void 0 : _a.remove(obj);
         }
         update() {
             this.move();
             this.mouse();
             this.stats();
-            for (let obj of this.objs) {
-                obj.update();
-            }
+            globals.galaxy.update(pts.divide(this.pos, Game.Galaxy.Unit));
         }
         mouse() {
             let mouse = App.mouse();
-            mouse = Pts.subtract(mouse, Pts.divide([Renderer.w, Renderer.h], 2));
-            mouse = Pts.mult(mouse, Renderer.ndpi);
+            mouse = pts.subtract(mouse, pts.divide([Renderer.w, Renderer.h], 2));
+            mouse = pts.mult(mouse, Renderer.ndpi);
             mouse[1] = -mouse[1];
-            this.mpos = Pts.add(this.view, mouse);
+            this.mpos = pts.add(this.view, mouse);
             if (App.button(0) == 1) {
                 console.log('clicked the view');
                 let ping = new Game3.Ping;
-                ping.wpos = this.mpos;
+                ping.wpos = pts.divide(this.mpos, Game.Galaxy.Unit);
                 ping.done();
                 this.add(ping);
             }
@@ -61,16 +67,17 @@ var Game2;
                 this.view[0] -= pan;
             if (App.key('d'))
                 this.view[0] += pan;
-            let inv = Pts.inv(this.view);
+            let inv = pts.inv(this.view);
             Renderer.scene.position.set(inv[0], inv[1], 0);
         }
         stats() {
             let crunch = ``;
             crunch += `DPI_UPSCALED_RT: ${Renderer.DPI_UPSCALED_RT}<br />`;
-            crunch += `(n)dpi: ${Renderer.ndpi}<br /><br/>`;
-            crunch += `mouse: ${Pts.to_string(App.mouse())}<br /><br />`;
-            crunch += `world view: ${Pts.to_string(this.view)}<br />`;
-            crunch += `world pos: ${Pts.to_string(this.pos)}<br />`;
+            crunch += `(n)dpi: ${Renderer.ndpi}<br />`;
+            crunch += `sectors: ${globals.galaxy.center.shown.length} / ${Game.Sector.Num}<br /><br/>`;
+            crunch += `mouse: ${pts.to_string(App.mouse())}<br /><br />`;
+            crunch += `world view: ${pts.to_string(this.view)}<br />`;
+            crunch += `world pos: ${pts.to_string(this.pos)}<br />`;
             crunch += `num game objs: ${Game.Obj.Active} / ${Game.Obj.Num}<br />`;
             crunch += `num drawables: ${Game.Drawable.Active} / ${Game.Drawable.Num}<br />`;
             App.sethtml('.stats', crunch);
@@ -104,5 +111,14 @@ var Game2;
         }
     }
     Game2.Ply = Ply;
+    let Util;
+    (function (Util) {
+        function Sector_getobjat(s, wpos) {
+            for (let obj of s.objs_())
+                if (pts.equals(obj.wpos, wpos))
+                    return obj;
+        }
+        Util.Sector_getobjat = Sector_getobjat;
+    })(Util = Game2.Util || (Game2.Util = {}));
 })(Game2 || (Game2 = {}));
 export default Game2;

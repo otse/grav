@@ -56,7 +56,7 @@ export var Grav;
     Grav.critical = critical;
     function init() {
         console.log('grav init');
-        Game2.World.make();
+        Game2.start();
         time = new Date().getTime();
         resourced('RC_UNDEFINED');
         resourced('POPULAR_ASSETS');

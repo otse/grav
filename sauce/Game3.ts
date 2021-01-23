@@ -2,7 +2,7 @@ import { Mesh, PlaneBufferGeometry, MeshBasicMaterial, Vector3, Color } from "th
 
 import App from "./App";
 
-import Pts from "./Pts";
+import pts from "./Pts";
 import Renderer from "./Renderer";
 import Game from "./Game";
 

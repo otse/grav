@@ -64,6 +64,7 @@ namespace Renderer {
 
 	var reset = 0;
 	var frames = 0;
+	
 	export var fps;
 	export var memory;
 

@@ -1,9 +1,119 @@
 import { Mesh, PlaneBufferGeometry, MeshBasicMaterial } from "three";
 import aabb2 from "./Aabb2";
-import Pts from "./Pts";
+import pts from "./Pts";
 import Renderer from "./Renderer";
 var Game;
 (function (Game) {
+    class Galaxy {
+        constructor(span) {
+            this.arrays = [];
+            this.sectorSpan = span;
+            this.center = new Center(this);
+        }
+        update(wpos) {
+            // lay out sectors in a grid
+            this.center.big = wpos;
+            this.center.off();
+            this.center.crawl();
+        }
+        big(wpos) {
+            return pts.floor(pts.divide(wpos, this.sectorSpan));
+        }
+        atnullable(x, y) {
+            if (this.arrays[y] == undefined)
+                this.arrays[y] = [];
+            return this.arrays[y][x];
+        }
+        at(x, y) {
+            return this.atnullable(x, y) || this.make(x, y);
+        }
+        atsmall(wpos) {
+            let ig = this.big(wpos);
+            return this.at(ig[0], ig[1]);
+        }
+        make(x, y) {
+            let s = this.atnullable(x, y);
+            if (s)
+                return s;
+            //console.log('galaxy make', [x, y]);
+            s = this.arrays[y][x] = new Sector(x, y, this);
+            return s;
+        }
+    }
+    Galaxy.Unit = 50;
+    Game.Galaxy = Galaxy;
+    class Sector {
+        constructor(x, y, galaxy) {
+            this.active = false;
+            this.span = 2000;
+            this.objs = [];
+            this.big = [x, y];
+            Sector.Num++;
+        }
+        add(obj) {
+            let i = this.objs.indexOf(obj);
+            if (i == -1)
+                this.objs.push(obj);
+            if (this.active)
+                obj.show();
+        }
+        remove(obj) {
+            let i = this.objs.indexOf(obj);
+            if (i > -1)
+                return !!this.objs.splice(i, 1);
+        }
+        updates() {
+            for (let obj of this.objs)
+                obj.tickupdate();
+        }
+        show() {
+            if (this.active)
+                return;
+            for (let obj of this.objs)
+                obj.show();
+            return this.active = true;
+        }
+        hide() {
+            if (!this.active)
+                return;
+            for (let obj of this.objs)
+                obj.hide();
+            return this.active = false;
+        }
+        objs_() { return this.objs; }
+    }
+    Sector.Num = 0;
+    Game.Sector = Sector;
+    class Center {
+        constructor(galaxy) {
+            this.galaxy = galaxy;
+            this.big = [0, 0];
+            this.shown = [];
+        }
+        crawl() {
+            let radius = 4;
+            let half = Math.ceil(radius / 2);
+            for (let y = -half; y < half; y++) {
+                for (let x = -half; x < half; x++) {
+                    let pos = pts.add(this.big, [x, y]);
+                    let s = this.galaxy.atnullable(pos[0], pos[1]);
+                    if (s === null || s === void 0 ? void 0 : s.show()) {
+                        this.shown.push(s);
+                    }
+                }
+            }
+        }
+        off() {
+            let i = this.shown.length;
+            while (i--) {
+                let s;
+                s = this.shown[i];
+                s.updates();
+                //if (pts.distsimple(big, s.big) > 2)
+            }
+        }
+    }
+    Game.Center = Center;
     class Obj {
         constructor() {
             this.wpos = [0, 0];
@@ -27,17 +137,18 @@ var Game;
         }
         update() {
             var _a;
-            // implement
             (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.update();
         }
+        tickupdate() {
+            this.update();
+        }
         done() {
-            // implement
-            this.rpos = [...this.wpos];
+            this.rpos = pts.mult(this.wpos, Galaxy.Unit);
             this.bound();
         }
         bound() {
-            let div = Pts.divide(this.size, 2);
-            this.aabb = new aabb2(Pts.inv(div), div);
+            let div = pts.divide(this.size, 2);
+            this.aabb = new aabb2(pts.inv(div), div);
             this.aabb.translate(this.wpos);
         }
         moused(mouse) {
@@ -52,6 +163,7 @@ var Game;
     class Drawable {
         constructor(obj) {
             this.obj = obj;
+            this.active = false;
             Drawable.Num++;
         }
         done() {
@@ -67,12 +179,18 @@ var Game;
         }
         show() {
             var _a;
+            if (this.active)
+                return;
             (_a = this.shape) === null || _a === void 0 ? void 0 : _a.setup();
+            this.active = true;
             Drawable.Active++;
         }
         hide() {
             var _a;
+            if (!this.active)
+                return;
             (_a = this.shape) === null || _a === void 0 ? void 0 : _a.dispose();
+            this.active = false;
             Drawable.Active--;
         }
     }

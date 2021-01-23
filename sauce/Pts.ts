@@ -2,7 +2,7 @@ import aabb2 from "./Aabb2";
 
 export interface Pt { x: number; y: number };
 
-class Pts {
+class pts {
 	static pt(a: vec2): Pt {
 		return { x: a[0], y: a[1] };
 	}
@@ -87,6 +87,20 @@ class Pts {
 		return zx[0] + zx[1];
 	}
 
+	// https://vorg.github.io/pex/docs/pex-geom/Vec2.html
+
+	static dist(a: vec2, b: vec2): number {
+		let dx = b[0] - a[0];
+		let dy = b[1] - b[1];
+		return Math.sqrt(dx * dx + dy * dy);
+	}
+
+	static distsimple(a: vec2, b: vec2) {
+		let dx = Math.abs(b[0] - a[0]);
+		let dy = Math.abs(b[1] - a[1]);
+		return Math.min(dx, dy);
+	  };
+
 }
 
-export default Pts;
+export default pts;
