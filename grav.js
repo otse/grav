@@ -320,19 +320,24 @@ void main() {
                 this.span = 2000;
                 this.objs = [];
                 this.big = [x, y];
+                this.group = new THREE.Group;
                 Sector.Num++;
             }
             add(obj) {
                 let i = this.objs.indexOf(obj);
-                if (i == -1)
+                if (i == -1) {
                     this.objs.push(obj);
-                if (this.active)
-                    obj.show();
+                    obj.sector = this;
+                    if (this.active)
+                        obj.show();
+                }
             }
             remove(obj) {
                 let i = this.objs.indexOf(obj);
-                if (i > -1)
+                if (i > -1) {
+                    obj.sector = undefined;
                     return !!this.objs.splice(i, 1);
+                }
             }
             updates() {
                 for (let obj of this.objs)
@@ -344,6 +349,7 @@ void main() {
                 for (let obj of this.objs)
                     obj.show();
                 this.active = true;
+                Renderer$1.scene.add(this.group);
                 Sector.Active++;
                 return true;
             }
@@ -353,6 +359,7 @@ void main() {
                 for (let obj of this.objs)
                     obj.hide();
                 this.active = false;
+                Renderer$1.scene.remove(this.group);
                 Sector.Active--;
                 return true;
             }
@@ -368,7 +375,7 @@ void main() {
                 this.shown = [];
             }
             crawl() {
-                let radius = 4;
+                let radius = 3;
                 let half = Math.ceil(radius / 2);
                 for (let y = -half; y < half; y++) {
                     for (let x = -half; x < half; x++) {
@@ -444,7 +451,7 @@ void main() {
             bound() {
                 let div = pts.divide(this.size, 2);
                 this.aabb = new aabb2(pts.inv(div), div);
-                this.aabb.translate(pts.mult(this.wpos, Game.Galaxy.Unit));
+                this.aabb.translate(this.rpos);
             }
             moused(mouse) {
                 var _a;
@@ -526,9 +533,12 @@ void main() {
                 (_b = this.mesh) === null || _b === void 0 ? void 0 : _b.updateMatrix();
             }
             dispose() {
-                var _a, _b;
+                var _a, _b, _c;
+                if (!this.mesh)
+                    return;
                 (_a = this.geometry) === null || _a === void 0 ? void 0 : _a.dispose();
                 (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
+                (_c = this.mesh.parent) === null || _c === void 0 ? void 0 : _c.remove(this.mesh);
             }
             setup() {
                 let w = this.drawable.obj.size[0];
@@ -540,10 +550,13 @@ void main() {
                     transparent: true,
                 });
                 this.mesh = new THREE.Mesh(this.geometry, this.material);
-                //this.mesh.frustumCulled = false;
-                //this.mesh.matrixAutoUpdate = false;
+                this.mesh.frustumCulled = false;
+                this.mesh.matrixAutoUpdate = false;
                 this.update();
-                Renderer$1.scene.add(this.mesh);
+                if (this.drawable.obj.sector)
+                    this.drawable.obj.sector.group.add(this.mesh);
+                else
+                    Renderer$1.scene.add(this.mesh);
             }
         }
         Game.Quad = Quad;
@@ -667,6 +680,8 @@ void main() {
             stats() {
                 let crunch = ``;
                 crunch += `DPI_UPSCALED_RT: ${Renderer$1.DPI_UPSCALED_RT}<br />`;
+                crunch += `fps: ${Renderer$1.fps}<br />`;
+                crunch += `memory: ${Renderer$1.memory}<br />`;
                 crunch += `(n)dpi: ${Renderer$1.ndpi}<br />`;
                 crunch += `mouse: ${pts.to_string(App$1.mouse())}<br /><br />`;
                 crunch += `world view: ${pts.to_string(this.view)}<br />`;
@@ -757,15 +772,8 @@ void main() {
                 super.done();
             }
             update() {
-                super.update();
-                if (this.moused(Game2$1.globals.wlrd.mpos)) {
-                    console.log('hover testing square');
-                    this.quad.material.color.set('red');
-                }
-                else {
-                    this.quad.material.color.set('white');
-                    //console.log('boo boo meadow');
-                }
+                //super.update();
+                return;
             }
         }
         TestingChamber.TestingSquare = TestingSquare;

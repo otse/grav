@@ -75,6 +75,8 @@ var Game2;
         stats() {
             let crunch = ``;
             crunch += `DPI_UPSCALED_RT: ${Renderer.DPI_UPSCALED_RT}<br />`;
+            crunch += `fps: ${Renderer.fps}<br />`;
+            crunch += `memory: ${Renderer.memory}<br />`;
             crunch += `(n)dpi: ${Renderer.ndpi}<br />`;
             crunch += `mouse: ${pts.to_string(App.mouse())}<br /><br />`;
             crunch += `world view: ${pts.to_string(this.view)}<br />`;

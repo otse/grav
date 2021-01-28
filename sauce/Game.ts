@@ -1,4 +1,4 @@
-import { Mesh, PlaneBufferGeometry, MeshBasicMaterial, Vector3, Color } from "three";
+import { Mesh, PlaneBufferGeometry, MeshBasicMaterial, Vector3, Color, Group } from "three";
 import aabb2 from "./Aabb2";
 import Grav from "./Grav";
 
@@ -50,24 +50,30 @@ namespace Game {
 		static Num = 0;
 		static Active = 0;
 		active = false;
+		group: Group;
 		readonly span = 2000;
 		readonly big: Vec2;
 		private readonly objs: Obj[] = [];
 		constructor(x, y, galaxy) {
 			this.big = [x, y];
+			this.group = new Group;
 			Sector.Num++;
 		}
 		add(obj: Obj) {
 			let i = this.objs.indexOf(obj);
-			if (i == -1)
+			if (i == -1) {
 				this.objs.push(obj);
-			if (this.active)
-				obj.show();
+				obj.sector = this;
+				if (this.active)
+					obj.show();
+			}
 		}
 		remove(obj: Obj): boolean | undefined {
 			let i = this.objs.indexOf(obj);
-			if (i > -1)
+			if (i > -1) {
+				obj.sector = undefined;
 				return !!this.objs.splice(i, 1);
+			}
 		}
 		updates() {
 			for (let obj of this.objs)
@@ -79,6 +85,7 @@ namespace Game {
 			for (let obj of this.objs)
 				obj.show();
 			this.active = true;
+			Renderer.scene.add(this.group);
 			Sector.Active++;
 			return true;
 		}
@@ -88,6 +95,7 @@ namespace Game {
 			for (let obj of this.objs)
 				obj.hide();
 			this.active = false;
+			Renderer.scene.remove(this.group);
 			Sector.Active--;
 			return true;
 		}
@@ -99,7 +107,7 @@ namespace Game {
 		constructor(private readonly galaxy: Galaxy) {
 		}
 		crawl() {
-			let radius = 4;
+			let radius = 3;
 			let half = Math.ceil(radius / 2);
 			for (let y = -half; y < half; y++) {
 				for (let x = -half; x < half; x++) {
@@ -177,7 +185,7 @@ namespace Game {
 		bound() {
 			let div = pts.divide(this.size, 2);
 			this.aabb = new aabb2(pts.inv(div), div);
-			this.aabb.translate(pts.mult(this.wpos, Game.Galaxy.Unit));
+			this.aabb.translate(this.rpos);
 		}
 		moused(mouse: Vec2) {
 			if (this.aabb?.test(new aabb2(mouse, mouse)))
@@ -253,8 +261,11 @@ namespace Game {
 			this.mesh?.updateMatrix();
 		}
 		dispose() {
+			if (!this.mesh)
+				return;
 			this.geometry?.dispose();
 			this.material?.dispose();
+			this.mesh.parent?.remove(this.mesh);
 		}
 		setup() {
 			let w = this.drawable.obj.size[0];
@@ -268,10 +279,13 @@ namespace Game {
 				//color: 'red'
 			});
 			this.mesh = new Mesh(this.geometry, this.material);
-			//this.mesh.frustumCulled = false;
-			//this.mesh.matrixAutoUpdate = false;
+			this.mesh.frustumCulled = false;
+			this.mesh.matrixAutoUpdate = false;
 			this.update();
-			Renderer.scene.add(this.mesh);
+			if (this.drawable.obj.sector)
+				this.drawable.obj.sector.group.add(this.mesh);
+			else
+				Renderer.scene.add(this.mesh);
 		}
 	}
 }

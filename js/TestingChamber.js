@@ -37,7 +37,8 @@ var TestingChamber;
             super.done();
         }
         update() {
-            super.update();
+            //super.update();
+            return;
             if (this.moused(Game2.globals.wlrd.mpos)) {
                 console.log('hover testing square');
                 this.quad.material.color.set('red');

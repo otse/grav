@@ -1,4 +1,4 @@
-import { Mesh, PlaneBufferGeometry, MeshBasicMaterial } from "three";
+import { Mesh, PlaneBufferGeometry, MeshBasicMaterial, Group } from "three";
 import aabb2 from "./Aabb2";
 import pts from "./Pts";
 import Renderer from "./Renderer";
@@ -50,19 +50,24 @@ var Game;
             this.span = 2000;
             this.objs = [];
             this.big = [x, y];
+            this.group = new Group;
             Sector.Num++;
         }
         add(obj) {
             let i = this.objs.indexOf(obj);
-            if (i == -1)
+            if (i == -1) {
                 this.objs.push(obj);
-            if (this.active)
-                obj.show();
+                obj.sector = this;
+                if (this.active)
+                    obj.show();
+            }
         }
         remove(obj) {
             let i = this.objs.indexOf(obj);
-            if (i > -1)
+            if (i > -1) {
+                obj.sector = undefined;
                 return !!this.objs.splice(i, 1);
+            }
         }
         updates() {
             for (let obj of this.objs)
@@ -74,6 +79,7 @@ var Game;
             for (let obj of this.objs)
                 obj.show();
             this.active = true;
+            Renderer.scene.add(this.group);
             Sector.Active++;
             return true;
         }
@@ -83,6 +89,7 @@ var Game;
             for (let obj of this.objs)
                 obj.hide();
             this.active = false;
+            Renderer.scene.remove(this.group);
             Sector.Active--;
             return true;
         }
@@ -98,7 +105,7 @@ var Game;
             this.shown = [];
         }
         crawl() {
-            let radius = 4;
+            let radius = 3;
             let half = Math.ceil(radius / 2);
             for (let y = -half; y < half; y++) {
                 for (let x = -half; x < half; x++) {
@@ -174,7 +181,7 @@ var Game;
         bound() {
             let div = pts.divide(this.size, 2);
             this.aabb = new aabb2(pts.inv(div), div);
-            this.aabb.translate(pts.mult(this.wpos, Game.Galaxy.Unit));
+            this.aabb.translate(this.rpos);
         }
         moused(mouse) {
             var _a;
@@ -256,9 +263,12 @@ var Game;
             (_b = this.mesh) === null || _b === void 0 ? void 0 : _b.updateMatrix();
         }
         dispose() {
-            var _a, _b;
+            var _a, _b, _c;
+            if (!this.mesh)
+                return;
             (_a = this.geometry) === null || _a === void 0 ? void 0 : _a.dispose();
             (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
+            (_c = this.mesh.parent) === null || _c === void 0 ? void 0 : _c.remove(this.mesh);
         }
         setup() {
             let w = this.drawable.obj.size[0];
@@ -270,10 +280,13 @@ var Game;
                 transparent: true,
             });
             this.mesh = new Mesh(this.geometry, this.material);
-            //this.mesh.frustumCulled = false;
-            //this.mesh.matrixAutoUpdate = false;
+            this.mesh.frustumCulled = false;
+            this.mesh.matrixAutoUpdate = false;
             this.update();
-            Renderer.scene.add(this.mesh);
+            if (this.drawable.obj.sector)
+                this.drawable.obj.sector.group.add(this.mesh);
+            else
+                Renderer.scene.add(this.mesh);
         }
     }
     Game.Quad = Quad;
