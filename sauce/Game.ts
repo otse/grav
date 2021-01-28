@@ -75,9 +75,9 @@ namespace Game {
 				return !!this.objs.splice(i, 1);
 			}
 		}
-		updates() {
+		tick() {
 			for (let obj of this.objs)
-				obj.tickupdate();
+				obj.tick();
 		}
 		show() {
 			if (this.active)
@@ -115,9 +115,11 @@ namespace Game {
 					let s = this.galaxy.atnullable(pos[0], pos[1]);
 					if (!s)
 						continue;
-					if (!s.active)
+					if (!s.active) {
 						this.shown.push(s);
-					s.show();
+						console.log(' show ! ');
+						s.show();
+					}
 				}
 			}
 
@@ -127,8 +129,8 @@ namespace Game {
 			while (i--) {
 				let s: Sector;
 				s = this.shown[i];
-				s.updates();
-				if (/*s hides*/false || pts.dist(s.big, this.big) > 2) {
+				s.tick();
+				if (pts.dist(s.big, this.big) > 3) {
 					console.log(' hide !');
 					s.hide();
 					this.shown.splice(i, 1);
@@ -170,12 +172,12 @@ namespace Game {
 		pose() {
 			this.rpos = pts.mult(this.wpos, Galaxy.Unit);
 		}
-		update() { // implement
-			this.pose();
-			this.drawable?.update();
+		tick() { // implement
 		}
-		tickupdate() {
-			this.update();
+		update() {
+			this.pose();
+			this.bound();
+			this.drawable?.update();
 		}
 		done() { // implement
 			this.pose();

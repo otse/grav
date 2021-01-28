@@ -36,7 +36,7 @@ var TestingChamber;
             this.quad = quad;
             super.done();
         }
-        update() {
+        tick() {
             //super.update();
             return;
             if (this.moused(Game2.globals.wlrd.mpos)) {

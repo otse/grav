@@ -35,7 +35,7 @@ var Game3;
             this.drawable.shape = shape;
             super.done();
         }
-        update() {
+        tick() {
             this.rz += 0.002;
             super.update();
         }

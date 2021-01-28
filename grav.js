@@ -339,9 +339,9 @@ void main() {
                     return !!this.objs.splice(i, 1);
                 }
             }
-            updates() {
+            tick() {
                 for (let obj of this.objs)
-                    obj.tickupdate();
+                    obj.tick();
             }
             show() {
                 if (this.active)
@@ -383,9 +383,11 @@ void main() {
                         let s = this.galaxy.atnullable(pos[0], pos[1]);
                         if (!s)
                             continue;
-                        if (!s.active)
+                        if (!s.active) {
                             this.shown.push(s);
-                        s.show();
+                            console.log(' show ! ');
+                            s.show();
+                        }
                     }
                 }
             }
@@ -394,8 +396,8 @@ void main() {
                 while (i--) {
                     let s;
                     s = this.shown[i];
-                    s.updates();
-                    if ( /*s hides*/ pts.dist(s.big, this.big) > 2) {
+                    s.tick();
+                    if (pts.dist(s.big, this.big) > 3) {
                         console.log(' hide !');
                         s.hide();
                         this.shown.splice(i, 1);
@@ -436,13 +438,13 @@ void main() {
             pose() {
                 this.rpos = pts.mult(this.wpos, Galaxy.Unit);
             }
+            tick() {
+            }
             update() {
                 var _a;
                 this.pose();
+                this.bound();
                 (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.update();
-            }
-            tickupdate() {
-                this.update();
             }
             done() {
                 this.pose();
@@ -599,7 +601,7 @@ void main() {
                 this.drawable.shape = shape;
                 super.done();
             }
-            update() {
+            tick() {
                 this.rz += 0.002;
                 super.update();
             }
@@ -716,7 +718,8 @@ void main() {
                 this.drawable.shape = quad;
                 super.done();
             }
-            update() {
+            tick() {
+                super.update();
             }
         }
         Game2.Ply = Ply;
@@ -771,7 +774,7 @@ void main() {
                 this.quad = quad;
                 super.done();
             }
-            update() {
+            tick() {
                 //super.update();
                 return;
             }

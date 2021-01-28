@@ -111,7 +111,8 @@ var Game2;
             this.drawable.shape = quad;
             super.done();
         }
-        update() {
+        tick() {
+            super.update();
         }
     }
     Game2.Ply = Ply;

@@ -109,8 +109,8 @@ namespace Game2 {
 			this.drawable.shape = quad;
 			super.done();
 		}
-		update() {
-
+		tick() {
+			super.update();
 		}
 	}
 	export namespace Util {
