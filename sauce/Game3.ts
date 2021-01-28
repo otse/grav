@@ -13,7 +13,7 @@ namespace Game3 {
 	export class Ping extends Game.Obj {
 		constructor() {
 			super();
-		}
+		}	
 		done() {
 			let drawable = new Game.Drawable(this);
 			drawable.done();
@@ -23,6 +23,26 @@ namespace Game3 {
 			this.drawable = drawable;
 			this.drawable.shape = shape;
 			super.done();
+		}
+	}
+	export class Rock extends Game.Obj {
+		constructor() {
+			super();
+		}
+		done() {
+			this.size = [200, 200];
+			let drawable = new Game.Drawable(this);
+			drawable.done();
+			let shape = new Game.Quad(drawable);
+			shape.img = 'pngwing.com';
+			shape.done();
+			this.drawable = drawable;
+			this.drawable.shape = shape;
+			super.done();
+		}
+		update() {
+			this.rz += 0.002;
+			super.update();
 		}
 	}
 }

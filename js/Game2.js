@@ -39,7 +39,9 @@ var Game2;
             this.move();
             this.mouse();
             this.stats();
-            globals.galaxy.update(pts.divide(this.pos, Game.Galaxy.Unit));
+            //let mouse = pts.divide(this.pos, Game.Galaxy.Unit);
+            let pos = Game.Galaxy.unproject(this.view);
+            globals.galaxy.update(pos);
         }
         mouse() {
             let mouse = App.mouse();
@@ -49,10 +51,10 @@ var Game2;
             this.mpos = pts.add(this.view, mouse);
             if (App.button(0) == 1) {
                 console.log('clicked the view');
-                let ping = new Game3.Ping;
-                ping.wpos = pts.divide(this.mpos, Game.Galaxy.Unit);
-                ping.done();
-                this.add(ping);
+                let rock = new Game3.Rock;
+                rock.wpos = pts.divide(this.mpos, Game.Galaxy.Unit);
+                rock.done();
+                this.add(rock);
             }
         }
         move() {
@@ -113,6 +115,9 @@ var Game2;
     Game2.Ply = Ply;
     let Util;
     (function (Util) {
+        function Galx_towpos(s, wpos) {
+        }
+        Util.Galx_towpos = Galx_towpos;
         function Sector_getobjat(s, wpos) {
             for (let obj of s.objs_())
                 if (pts.equals(obj.wpos, wpos))

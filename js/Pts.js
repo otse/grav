@@ -67,7 +67,7 @@ class pts {
     // https://vorg.github.io/pex/docs/pex-geom/Vec2.html
     static dist(a, b) {
         let dx = b[0] - a[0];
-        let dy = b[1] - b[1];
+        let dy = b[1] - a[1];
         return Math.sqrt(dx * dx + dy * dy);
     }
     static distsimple(a, b) {

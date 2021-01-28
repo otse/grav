@@ -8,8 +8,9 @@ var TestingChamber;
         console.log('...regardless of your os or browsers dpi setting');
         for (let y = 0; y < 50; y++) {
             for (let x = 0; x < 50; x++) {
+                let conversion = 100 / Game.Galaxy.Unit;
                 let square = TestingSquare.make();
-                square.wpos = [x * 100, y * 100];
+                square.wpos = [x * conversion, y * conversion];
                 square.done();
                 Game2.globals.wlrd.add(square);
             }
@@ -36,6 +37,7 @@ var TestingChamber;
             super.done();
         }
         update() {
+            super.update();
             if (this.moused(Game2.globals.wlrd.mpos)) {
                 console.log('hover testing square');
                 this.quad.material.color.set('red');

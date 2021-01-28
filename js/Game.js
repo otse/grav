@@ -7,17 +7,13 @@ var Game;
     class Galaxy {
         constructor(span) {
             this.arrays = [];
-            this.sectorSpan = span;
             this.center = new Center(this);
         }
         update(wpos) {
             // lay out sectors in a grid
-            this.center.big = wpos;
+            this.center.big = Galaxy.big(wpos);
             this.center.off();
             this.center.crawl();
-        }
-        big(wpos) {
-            return pts.floor(pts.divide(wpos, this.sectorSpan));
         }
         atnullable(x, y) {
             if (this.arrays[y] == undefined)
@@ -28,7 +24,7 @@ var Game;
             return this.atnullable(x, y) || this.make(x, y);
         }
         atsmall(wpos) {
-            let ig = this.big(wpos);
+            let ig = Galaxy.big(wpos);
             return this.at(ig[0], ig[1]);
         }
         make(x, y) {
@@ -38,8 +34,15 @@ var Game;
             s = this.arrays[y][x] = new Sector(x, y, this);
             return s;
         }
+        static big(wpos) {
+            return pts.floor(pts.divide(wpos, Galaxy.SectorSpan));
+        }
+        static unproject(pixel) {
+            return pts.divide(pixel, Game.Galaxy.Unit);
+        }
     }
     Galaxy.Unit = 50;
+    Galaxy.SectorSpan = 10;
     Game.Galaxy = Galaxy;
     class Sector {
         constructor(x, y, galaxy) {
@@ -67,7 +70,7 @@ var Game;
         }
         show() {
             if (this.active)
-                return;
+                return false;
             for (let obj of this.objs)
                 obj.show();
             this.active = true;
@@ -76,7 +79,7 @@ var Game;
         }
         hide() {
             if (!this.active)
-                return;
+                return false;
             for (let obj of this.objs)
                 obj.hide();
             this.active = false;
@@ -115,7 +118,11 @@ var Game;
                 let s;
                 s = this.shown[i];
                 s.updates();
-                //if (pts.distsimple(big, s.big) > 2)
+                if ( /*s hides*/false || pts.dist(s.big, this.big) > 2) {
+                    console.log(' hide !');
+                    s.hide();
+                    this.shown.splice(i, 1);
+                }
             }
         }
     }
@@ -126,6 +133,7 @@ var Game;
             this.wpos = [0, 0];
             this.rpos = [0, 0];
             this.size = [100, 100];
+            this.rz = 0;
             Obj.Num++;
         }
         delete() {
@@ -148,21 +156,25 @@ var Game;
             this.active = false;
             Obj.Active--;
         }
+        pose() {
+            this.rpos = pts.mult(this.wpos, Galaxy.Unit);
+        }
         update() {
             var _a;
+            this.pose();
             (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.update();
         }
         tickupdate() {
             this.update();
         }
         done() {
-            this.rpos = pts.mult(this.wpos, Galaxy.Unit);
+            this.pose();
             this.bound();
         }
         bound() {
             let div = pts.divide(this.size, 2);
             this.aabb = new aabb2(pts.inv(div), div);
-            this.aabb.translate(this.wpos);
+            this.aabb.translate(pts.mult(this.wpos, Game.Galaxy.Unit));
         }
         moused(mouse) {
             var _a;
@@ -237,6 +249,9 @@ var Game;
         }
         update() {
             var _a, _b;
+            if (!this.mesh)
+                return;
+            this.mesh.rotation.z = this.drawable.obj.rz;
             (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...this.drawable.obj.rpos, 0]);
             (_b = this.mesh) === null || _b === void 0 ? void 0 : _b.updateMatrix();
         }

@@ -8,21 +8,17 @@ import Renderer from "./Renderer";
 namespace Game {
 	export class Galaxy {
 		static readonly Unit = 50;
-		readonly sectorSpan: number;
+		static readonly SectorSpan = 10;
 		arrays: Sector[][] = [];
 		readonly center: Center;
 		constructor(span) {
-			this.sectorSpan = span;
 			this.center = new Center(this);
 		}
 		update(wpos: Vec2) {
 			// lay out sectors in a grid
-			this.center.big = wpos;
+			this.center.big = Galaxy.big(wpos);
 			this.center.off();
 			this.center.crawl();
-		}
-		big(wpos: Vec2): Vec2 {
-			return pts.floor(pts.divide(wpos, this.sectorSpan));
 		}
 		atnullable(x, y): Sector | undefined { // nullable
 			if (this.arrays[y] == undefined)
@@ -33,7 +29,7 @@ namespace Game {
 			return this.atnullable(x, y) || this.make(x, y);
 		}
 		atsmall(wpos: Vec2): Sector {
-			let ig = this.big(wpos);
+			let ig = Galaxy.big(wpos);
 			return this.at(ig[0], ig[1]);
 		}
 		make(x, y): Sector {
@@ -42,6 +38,12 @@ namespace Game {
 				return s;
 			s = this.arrays[y][x] = new Sector(x, y, this);
 			return s;
+		}
+		static big(wpos: Vec2): Vec2 {
+			return pts.floor(pts.divide(wpos, Galaxy.SectorSpan));
+		}
+		static unproject(pixel: Vec2): Vec2 { // wpos
+			return pts.divide(pixel, Game.Galaxy.Unit);
 		}
 	}
 	export class Sector {
@@ -68,20 +70,23 @@ namespace Game {
 				return !!this.objs.splice(i, 1);
 		}
 		updates() {
-			for (let obj of this.objs) obj.tickupdate();
+			for (let obj of this.objs)
+				obj.tickupdate();
 		}
 		show() {
 			if (this.active)
-				return;
-			for (let obj of this.objs) obj.show();
+				return false;
+			for (let obj of this.objs)
+				obj.show();
 			this.active = true;
 			Sector.Active++;
 			return true;
 		}
 		hide() {
 			if (!this.active)
-				return;
-			for (let obj of this.objs) obj.hide();
+				return false;
+			for (let obj of this.objs)
+				obj.hide();
 			this.active = false;
 			Sector.Active--;
 			return true;
@@ -115,8 +120,11 @@ namespace Game {
 				let s: Sector;
 				s = this.shown[i];
 				s.updates();
-				//if (pts.distsimple(big, s.big) > 2)
-
+				if (/*s hides*/false || pts.dist(s.big, this.big) > 2) {
+					console.log(' hide !');
+					s.hide();
+					this.shown.splice(i, 1);
+				}
 			}
 		}
 	}
@@ -129,6 +137,7 @@ namespace Game {
 		size: Vec2 = [100, 100];
 		drawable: Drawable | undefined;
 		sector: Sector | undefined;
+		rz = 0;
 		constructor() {
 			Obj.Num++;
 		}
@@ -150,21 +159,25 @@ namespace Game {
 			this.active = false;
 			Obj.Active--;
 		}
+		pose() {
+			this.rpos = pts.mult(this.wpos, Galaxy.Unit);
+		}
 		update() { // implement
+			this.pose();
 			this.drawable?.update();
 		}
 		tickupdate() {
 			this.update();
 		}
 		done() { // implement
-			this.rpos = pts.mult(this.wpos, Galaxy.Unit);
+			this.pose();
 			this.bound();
 		}
 		aabb: aabb2 | undefined;
 		bound() {
 			let div = pts.divide(this.size, 2);
 			this.aabb = new aabb2(pts.inv(div), div);
-			this.aabb.translate(this.wpos);
+			this.aabb.translate(pts.mult(this.wpos, Game.Galaxy.Unit));
 		}
 		moused(mouse: Vec2) {
 			if (this.aabb?.test(new aabb2(mouse, mouse)))
@@ -233,6 +246,9 @@ namespace Game {
 		done() {
 		}
 		update() {
+			if (!this.mesh)
+				return;
+			this.mesh.rotation.z = this.drawable.obj.rz;
 			this.mesh?.position.fromArray([...this.drawable.obj.rpos, 0]);
 			this.mesh?.updateMatrix();
 		}

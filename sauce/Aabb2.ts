@@ -14,7 +14,7 @@ class aabb2 {
 		return new aabb2(bb.min, bb.max);
 	}
 	constructor(a: vec2, b: vec2) {
-		this.min = this.max = [...a];
+		this.min = this.max = <vec2>[...a];
 		if (b) {
 			this.extend(b);
 		}

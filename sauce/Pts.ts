@@ -91,7 +91,7 @@ class pts {
 
 	static dist(a: vec2, b: vec2): number {
 		let dx = b[0] - a[0];
-		let dy = b[1] - b[1];
+		let dy = b[1] - a[1];
 		return Math.sqrt(dx * dx + dy * dy);
 	}
 

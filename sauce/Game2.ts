@@ -42,7 +42,10 @@ namespace Game2 {
 			this.move();
 			this.mouse();
 			this.stats();
-			globals.galaxy.update(pts.divide(this.pos, Game.Galaxy.Unit));
+
+			//let mouse = pts.divide(this.pos, Game.Galaxy.Unit);
+			let pos = Game.Galaxy.unproject(this.view);
+			globals.galaxy.update(pos);
 		}
 		mouse() {
 			let mouse = App.mouse();
@@ -52,10 +55,10 @@ namespace Game2 {
 			this.mpos = pts.add(this.view, mouse);
 			if (App.button(0) == 1) {
 				console.log('clicked the view');
-				let ping = new Game3.Ping;
-				ping.wpos = pts.divide(this.mpos, Game.Galaxy.Unit);
-				ping.done();
-				this.add(ping);
+				let rock = new Game3.Rock;
+				rock.wpos = pts.divide(this.mpos, Game.Galaxy.Unit);
+				rock.done();
+				this.add(rock);
 			}
 		}
 		move() {
@@ -109,6 +112,9 @@ namespace Game2 {
 		}
 	}
 	export namespace Util {
+		export function Galx_towpos(s: Game.Sector, wpos: Vec2) {
+		}
+
 		export function Sector_getobjat(s: Game.Sector, wpos: Vec2) {
 			for (let obj of s.objs_())
 				if (pts.equals(obj.wpos, wpos))
