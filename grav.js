@@ -293,7 +293,7 @@ void main() {
             at(x, y) {
                 return this.atnullable(x, y) || this.make(x, y);
             }
-            atsmall(wpos) {
+            atw(wpos) {
                 let ig = Galaxy.big(wpos);
                 return this.at(ig[0], ig[1]);
             }
@@ -316,11 +316,13 @@ void main() {
         Game.Galaxy = Galaxy;
         class Sector {
             constructor(x, y, galaxy) {
+                var _a;
                 this.active = false;
                 this.span = 2000;
                 this.objs = [];
                 this.big = [x, y];
                 this.group = new THREE.Group;
+                (_a = Sector.hooks) === null || _a === void 0 ? void 0 : _a.onCreate();
                 Sector.Num++;
             }
             add(obj) {
@@ -375,10 +377,9 @@ void main() {
                 this.shown = [];
             }
             crawl() {
-                let radius = 3;
-                let half = Math.ceil(radius / 2);
-                for (let y = -half; y < half; y++) {
-                    for (let x = -half; x < half; x++) {
+                const spread = 2; // this is * 2
+                for (let y = -spread; y < spread; y++) {
+                    for (let x = -spread; x < spread; x++) {
                         let pos = pts.add(this.big, [x, y]);
                         let s = this.galaxy.atnullable(pos[0], pos[1]);
                         if (!s)
@@ -392,12 +393,13 @@ void main() {
                 }
             }
             off() {
+                const outside = 3;
                 let i = this.shown.length;
                 while (i--) {
                     let s;
                     s = this.shown[i];
                     s.tick();
-                    if (pts.dist(s.big, this.big) > 3) {
+                    if (pts.dist(s.big, this.big) > outside) {
                         console.log(' hide !');
                         s.hide();
                         this.shown.splice(i, 1);
@@ -610,6 +612,22 @@ void main() {
     })(Game3 || (Game3 = {}));
     var Game3$1 = Game3;
 
+    // high level game happenings
+    var Hooks;
+    (function (Hooks) {
+        function start() {
+            console.log(' hooks start ');
+            Game$1.Sector.hooks = {
+                onCreate: SectorOnCreate
+            };
+        }
+        Hooks.start = start;
+        function SectorOnCreate() {
+        }
+        Hooks.SectorOnCreate = SectorOnCreate;
+    })(Hooks || (Hooks = {}));
+    var Hooks$1 = Hooks;
+
     var Game2;
     (function (Game2) {
         let globals;
@@ -618,6 +636,7 @@ void main() {
         function start() {
             globals.wlrd = Game2.World.make();
             globals.galaxy = new Game$1.Galaxy(10);
+            Hooks$1.start();
         }
         Game2.start = start;
         class World {
@@ -634,9 +653,8 @@ void main() {
             chart(big) {
             }
             add(obj) {
-                globals.galaxy.atsmall(obj.wpos).add(obj);
-                //this.objs.push(obj);
-                //obj.show();
+                let s = globals.galaxy.atw(obj.wpos);
+                s.add(obj);
             }
             remove(obj) {
                 var _a;
@@ -646,7 +664,6 @@ void main() {
                 this.move();
                 this.mouse();
                 this.stats();
-                //let mouse = pts.divide(this.pos, Game.Galaxy.Unit);
                 let pos = Game$1.Galaxy.unproject(this.view);
                 globals.galaxy.update(pos);
             }
@@ -659,7 +676,7 @@ void main() {
                 if (App$1.button(0) == 1) {
                     console.log('clicked the view');
                     let rock = new Game3$1.Rock;
-                    rock.wpos = pts.divide(this.mpos, Game$1.Galaxy.Unit);
+                    rock.wpos = pts.divide(this.mpos, Game$1.Galaxy.Unit); // Galaxy.unproject
                     rock.done();
                     this.add(rock);
                 }

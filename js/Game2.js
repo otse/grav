@@ -3,6 +3,7 @@ import pts from "./Pts";
 import Renderer from "./Renderer";
 import Game from "./Game";
 import Game3 from "./Game3";
+import Hooks from "./Hooks";
 var Game2;
 (function (Game2) {
     let globals;
@@ -11,6 +12,7 @@ var Game2;
     function start() {
         globals.wlrd = Game2.World.make();
         globals.galaxy = new Game.Galaxy(10);
+        Hooks.start();
     }
     Game2.start = start;
     class World {
@@ -27,9 +29,8 @@ var Game2;
         chart(big) {
         }
         add(obj) {
-            globals.galaxy.atsmall(obj.wpos).add(obj);
-            //this.objs.push(obj);
-            //obj.show();
+            let s = globals.galaxy.atw(obj.wpos);
+            s.add(obj);
         }
         remove(obj) {
             var _a;
@@ -39,7 +40,6 @@ var Game2;
             this.move();
             this.mouse();
             this.stats();
-            //let mouse = pts.divide(this.pos, Game.Galaxy.Unit);
             let pos = Game.Galaxy.unproject(this.view);
             globals.galaxy.update(pos);
         }
@@ -52,7 +52,7 @@ var Game2;
             if (App.button(0) == 1) {
                 console.log('clicked the view');
                 let rock = new Game3.Rock;
-                rock.wpos = pts.divide(this.mpos, Game.Galaxy.Unit);
+                rock.wpos = pts.divide(this.mpos, Game.Galaxy.Unit); // Galaxy.unproject
                 rock.done();
                 this.add(rock);
             }

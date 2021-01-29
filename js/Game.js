@@ -23,7 +23,7 @@ var Game;
         at(x, y) {
             return this.atnullable(x, y) || this.make(x, y);
         }
-        atsmall(wpos) {
+        atw(wpos) {
             let ig = Galaxy.big(wpos);
             return this.at(ig[0], ig[1]);
         }
@@ -44,13 +44,16 @@ var Game;
     Galaxy.Unit = 50;
     Galaxy.SectorSpan = 10;
     Game.Galaxy = Galaxy;
+    ;
     class Sector {
         constructor(x, y, galaxy) {
+            var _a;
             this.active = false;
             this.span = 2000;
             this.objs = [];
             this.big = [x, y];
             this.group = new Group;
+            (_a = Sector.hooks) === null || _a === void 0 ? void 0 : _a.onCreate();
             Sector.Num++;
         }
         add(obj) {
@@ -105,10 +108,9 @@ var Game;
             this.shown = [];
         }
         crawl() {
-            let radius = 3;
-            let half = Math.ceil(radius / 2);
-            for (let y = -half; y < half; y++) {
-                for (let x = -half; x < half; x++) {
+            const spread = 2; // this is * 2
+            for (let y = -spread; y < spread; y++) {
+                for (let x = -spread; x < spread; x++) {
                     let pos = pts.add(this.big, [x, y]);
                     let s = this.galaxy.atnullable(pos[0], pos[1]);
                     if (!s)
@@ -122,12 +124,13 @@ var Game;
             }
         }
         off() {
+            const outside = 3;
             let i = this.shown.length;
             while (i--) {
                 let s;
                 s = this.shown[i];
                 s.tick();
-                if (pts.dist(s.big, this.big) > 3) {
+                if (pts.dist(s.big, this.big) > outside) {
                     console.log(' hide !');
                     s.hide();
                     this.shown.splice(i, 1);
