@@ -5,6 +5,22 @@ import Grav from "./Grav";
 import pts from "./Pts";
 import Renderer from "./Renderer";
 
+class Countable {
+	static Num = 0;
+	static Active = 0;
+	active = false;
+	on() {
+		if (this.active)
+			return true;
+		this.active = true;
+	}
+	off() {
+		if (!this.active)
+			return true;
+		this.active = false;
+	}
+};
+
 namespace Game {
 	export class Galaxy {
 		static readonly Unit = 50;
@@ -20,7 +36,7 @@ namespace Game {
 			this.center.off();
 			this.center.crawl();
 		}
-		atnullable(x, y): Sector | undefined { // nullable
+		atnullable(x, y): Sector | undefined {
 			if (this.arrays[y] == undefined)
 				this.arrays[y] = [];
 			return this.arrays[y][x];
@@ -49,20 +65,18 @@ namespace Game {
 	interface SectorHooks {
 		onCreate: () => any;
 	};
-	export class Sector {
+	export class Sector extends Countable {
 		static hooks?: SectorHooks | undefined;
-		static Num = 0;
-		static Active = 0;
-		active = false;
 		group: Group;
 		readonly span = 2000;
 		readonly big: Vec2;
 		private readonly objs: Obj[] = [];
 		constructor(x, y, galaxy) {
+			super();
+			Sector.Num++;
 			this.big = [x, y];
 			this.group = new Group;
 			Sector.hooks?.onCreate();
-			Sector.Num++;
 		}
 		add(obj: Obj) {
 			let i = this.objs.indexOf(obj);
@@ -77,7 +91,7 @@ namespace Game {
 			let i = this.objs.indexOf(obj);
 			if (i > -1) {
 				obj.sector = undefined;
-				return !!this.objs.splice(i, 1);
+				return !!this.objs.splice(i, 1).length;
 			}
 		}
 		tick() {
@@ -85,24 +99,20 @@ namespace Game {
 				obj.tick();
 		}
 		show() {
-			if (this.active)
-				return false;
+			if (this.on())
+				return;
+			Sector.Active++;
 			for (let obj of this.objs)
 				obj.show();
-			this.active = true;
 			Renderer.scene.add(this.group);
-			Sector.Active++;
-			return true;
 		}
 		hide() {
-			if (!this.active)
-				return false;
+			if (this.off())
+				return;
+			Sector.Active--;
 			for (let obj of this.objs)
 				obj.hide();
-			this.active = false;
 			Renderer.scene.remove(this.group);
-			Sector.Active--;
-			return true;
 		}
 		objs_(): ReadonlyArray<Obj> { return this.objs; }
 	}
@@ -112,7 +122,7 @@ namespace Game {
 		constructor(private readonly galaxy: Galaxy) {
 		}
 		crawl() {
-			const spread = 2; // this is * 2
+			const spread = 3; // this is * 2
 			for (let y = -spread; y < spread; y++) {
 				for (let x = -spread; x < spread; x++) {
 					let pos = pts.add(this.big, [x, y]);
@@ -129,7 +139,7 @@ namespace Game {
 
 		}
 		off() {
-			const outside = 3;
+			const outside = 4;
 			let i = this.shown.length;
 			while (i--) {
 				let s: Sector;
@@ -143,10 +153,7 @@ namespace Game {
 			}
 		}
 	}
-	export class Obj { // extend me
-		static Num = 0;
-		static Active = 0;
-		active = false;
+	export class Obj extends Countable { // extend me
 		wpos: Vec2 = [0, 0];
 		rpos: Vec2 = [0, 0];
 		size: Vec2 = [100, 100];
@@ -154,6 +161,7 @@ namespace Game {
 		sector: Sector | undefined;
 		rz = 0;
 		constructor() {
+			super();
 			Obj.Num++;
 		}
 		delete() {
@@ -161,18 +169,16 @@ namespace Game {
 			Obj.Num--;
 		}
 		show() {
-			if (this.active)
+			if (this.on())
 				return;
-			this.drawable?.show();
-			this.active = true;
 			Obj.Active++;
+			this.drawable?.show();
 		}
 		hide() {
-			if (!this.active)
+			if (this.off())
 				return;
-			this.drawable?.hide();
-			this.active = false;
 			Obj.Active--;
+			this.drawable?.hide();
 		}
 		pose() {
 			this.rpos = pts.mult(this.wpos, Galaxy.Unit);
@@ -199,12 +205,10 @@ namespace Game {
 				return true;
 		}
 	}
-	export class Drawable {
-		static Num = 0;
-		static Active = 0;
-		active = false;
+	export class Drawable extends Countable {
 		shape: Shape | undefined;
 		constructor(public readonly obj: Obj) {
+			super();
 			Drawable.Num++;
 		}
 		done() {
@@ -218,18 +222,16 @@ namespace Game {
 			Drawable.Num--;
 		}
 		show() {
-			if (this.active)
+			if (this.on())
 				return;
-			this.shape?.setup();
-			this.active = true;
 			Drawable.Active++;
+			this.shape?.setup();
 		}
 		hide() {
-			if (!this.active)
+			if (this.off())
 				return;
-			this.shape?.dispose();
-			this.active = false;
 			Drawable.Active--;
+			this.shape?.dispose();
 		}
 
 	}

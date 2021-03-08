@@ -53,7 +53,7 @@ var Renderer;
         Renderer.renderer.setRenderTarget(Renderer.target);
         Renderer.renderer.clear();
         Renderer.renderer.render(Renderer.scene, Renderer.camera);
-        Renderer.renderer.setRenderTarget(null); // Naar scherm
+        Renderer.renderer.setRenderTarget(null);
         Renderer.renderer.clear();
         Renderer.renderer.render(Renderer.scene2, Renderer.camera);
     }

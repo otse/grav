@@ -1,7 +1,9 @@
 var Grav = (function (THREE) {
     'use strict';
 
-    var THREE__default = 'default' in THREE ? THREE['default'] : THREE;
+    function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+    var THREE__default = /*#__PURE__*/_interopDefaultLegacy(THREE);
 
     class pts {
         static pt(a) {
@@ -128,7 +130,7 @@ void main() {
             Renderer.renderer.setRenderTarget(Renderer.target);
             Renderer.renderer.clear();
             Renderer.renderer.render(Renderer.scene, Renderer.camera);
-            Renderer.renderer.setRenderTarget(null); // Naar scherm
+            Renderer.renderer.setRenderTarget(null);
             Renderer.renderer.clear();
             Renderer.renderer.render(Renderer.scene2, Renderer.camera);
         }
@@ -144,9 +146,9 @@ void main() {
             if (!Renderer.DPI_UPSCALED_RT)
                 Renderer.ndpi = 1;
             Renderer.target = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, {
-                minFilter: THREE__default.NearestFilter,
-                magFilter: THREE__default.NearestFilter,
-                format: THREE__default.RGBFormat
+                minFilter: THREE__default['default'].NearestFilter,
+                magFilter: THREE__default['default'].NearestFilter,
+                format: THREE__default['default'].RGBFormat
             });
             Renderer.renderer = new THREE.WebGLRenderer({ antialias: false });
             Renderer.renderer.setPixelRatio(Renderer.ndpi);
@@ -200,8 +202,8 @@ void main() {
             if (mem[key || file])
                 return mem[key || file];
             let texture = new THREE.TextureLoader().load(file + `?v=${App$1.salt}`, cb);
-            texture.magFilter = THREE__default.NearestFilter;
-            texture.minFilter = THREE__default.NearestFilter;
+            texture.magFilter = THREE__default['default'].NearestFilter;
+            texture.minFilter = THREE__default['default'].NearestFilter;
             mem[key || file] = texture;
             return texture;
         }
@@ -272,6 +274,23 @@ void main() {
     }
     aabb2.TEST = TEST;
 
+    class Countable {
+        constructor() {
+            this.active = false;
+        }
+        on() {
+            if (this.active)
+                return true;
+            this.active = true;
+        }
+        off() {
+            if (!this.active)
+                return true;
+            this.active = false;
+        }
+    }
+    Countable.Num = 0;
+    Countable.Active = 0;
     var Game;
     (function (Game) {
         class Galaxy {
@@ -314,16 +333,16 @@ void main() {
         Galaxy.Unit = 50;
         Galaxy.SectorSpan = 10;
         Game.Galaxy = Galaxy;
-        class Sector {
+        class Sector extends Countable {
             constructor(x, y, galaxy) {
                 var _a;
-                this.active = false;
+                super();
                 this.span = 2000;
                 this.objs = [];
+                Sector.Num++;
                 this.big = [x, y];
                 this.group = new THREE.Group;
                 (_a = Sector.hooks) === null || _a === void 0 ? void 0 : _a.onCreate();
-                Sector.Num++;
             }
             add(obj) {
                 let i = this.objs.indexOf(obj);
@@ -338,7 +357,7 @@ void main() {
                 let i = this.objs.indexOf(obj);
                 if (i > -1) {
                     obj.sector = undefined;
-                    return !!this.objs.splice(i, 1);
+                    return !!this.objs.splice(i, 1).length;
                 }
             }
             tick() {
@@ -346,29 +365,23 @@ void main() {
                     obj.tick();
             }
             show() {
-                if (this.active)
-                    return false;
+                if (this.on())
+                    return;
+                Sector.Active++;
                 for (let obj of this.objs)
                     obj.show();
-                this.active = true;
                 Renderer$1.scene.add(this.group);
-                Sector.Active++;
-                return true;
             }
             hide() {
-                if (!this.active)
-                    return false;
+                if (this.off())
+                    return;
+                Sector.Active--;
                 for (let obj of this.objs)
                     obj.hide();
-                this.active = false;
                 Renderer$1.scene.remove(this.group);
-                Sector.Active--;
-                return true;
             }
             objs_() { return this.objs; }
         }
-        Sector.Num = 0;
-        Sector.Active = 0;
         Game.Sector = Sector;
         class Center {
             constructor(galaxy) {
@@ -377,7 +390,7 @@ void main() {
                 this.shown = [];
             }
             crawl() {
-                const spread = 2; // this is * 2
+                const spread = 3; // this is * 2
                 for (let y = -spread; y < spread; y++) {
                     for (let x = -spread; x < spread; x++) {
                         let pos = pts.add(this.big, [x, y]);
@@ -393,7 +406,7 @@ void main() {
                 }
             }
             off() {
-                const outside = 3;
+                const outside = 4;
                 let i = this.shown.length;
                 while (i--) {
                     let s;
@@ -408,9 +421,9 @@ void main() {
             }
         }
         Game.Center = Center;
-        class Obj {
+        class Obj extends Countable {
             constructor() {
-                this.active = false;
+                super();
                 this.wpos = [0, 0];
                 this.rpos = [0, 0];
                 this.size = [100, 100];
@@ -423,19 +436,17 @@ void main() {
             }
             show() {
                 var _a;
-                if (this.active)
+                if (this.on())
                     return;
-                (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.show();
-                this.active = true;
                 Obj.Active++;
+                (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.show();
             }
             hide() {
                 var _a;
-                if (!this.active)
+                if (this.off())
                     return;
-                (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.hide();
-                this.active = false;
                 Obj.Active--;
+                (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.hide();
             }
             pose() {
                 this.rpos = pts.mult(this.wpos, Galaxy.Unit);
@@ -463,13 +474,11 @@ void main() {
                     return true;
             }
         }
-        Obj.Num = 0;
-        Obj.Active = 0;
         Game.Obj = Obj;
-        class Drawable {
+        class Drawable extends Countable {
             constructor(obj) {
+                super();
                 this.obj = obj;
-                this.active = false;
                 Drawable.Num++;
             }
             done() {
@@ -485,23 +494,19 @@ void main() {
             }
             show() {
                 var _a;
-                if (this.active)
+                if (this.on())
                     return;
-                (_a = this.shape) === null || _a === void 0 ? void 0 : _a.setup();
-                this.active = true;
                 Drawable.Active++;
+                (_a = this.shape) === null || _a === void 0 ? void 0 : _a.setup();
             }
             hide() {
                 var _a;
-                if (!this.active)
+                if (this.off())
                     return;
-                (_a = this.shape) === null || _a === void 0 ? void 0 : _a.dispose();
-                this.active = false;
                 Drawable.Active--;
+                (_a = this.shape) === null || _a === void 0 ? void 0 : _a.dispose();
             }
         }
-        Drawable.Num = 0;
-        Drawable.Active = 0;
         Game.Drawable = Drawable;
         class Shape {
             constructor(drawable) {
@@ -706,8 +711,8 @@ void main() {
                 crunch += `world view: ${pts.to_string(this.view)}<br />`;
                 crunch += `world pos: ${pts.to_string(this.pos)}<br /><br />`;
                 crunch += `sectors: ${Game$1.Sector.Active} / ${Game$1.Sector.Num}<br />`;
-                crunch += `num game objs: ${Game$1.Obj.Active} / ${Game$1.Obj.Num}<br />`;
-                crunch += `num drawables: ${Game$1.Drawable.Active} / ${Game$1.Drawable.Num}<br />`;
+                crunch += `game objs: ${Game$1.Obj.Active} / ${Game$1.Obj.Num}<br />`;
+                crunch += `drawables: ${Game$1.Drawable.Active} / ${Game$1.Drawable.Num}<br />`;
                 App$1.sethtml('.stats', crunch);
             }
             start() {

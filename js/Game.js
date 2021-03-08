@@ -2,6 +2,24 @@ import { Mesh, PlaneBufferGeometry, MeshBasicMaterial, Group } from "three";
 import aabb2 from "./Aabb2";
 import pts from "./Pts";
 import Renderer from "./Renderer";
+class Countable {
+    constructor() {
+        this.active = false;
+    }
+    on() {
+        if (this.active)
+            return true;
+        this.active = true;
+    }
+    off() {
+        if (!this.active)
+            return true;
+        this.active = false;
+    }
+}
+Countable.Num = 0;
+Countable.Active = 0;
+;
 var Game;
 (function (Game) {
     class Galaxy {
@@ -45,16 +63,16 @@ var Game;
     Galaxy.SectorSpan = 10;
     Game.Galaxy = Galaxy;
     ;
-    class Sector {
+    class Sector extends Countable {
         constructor(x, y, galaxy) {
             var _a;
-            this.active = false;
+            super();
             this.span = 2000;
             this.objs = [];
+            Sector.Num++;
             this.big = [x, y];
             this.group = new Group;
             (_a = Sector.hooks) === null || _a === void 0 ? void 0 : _a.onCreate();
-            Sector.Num++;
         }
         add(obj) {
             let i = this.objs.indexOf(obj);
@@ -69,7 +87,7 @@ var Game;
             let i = this.objs.indexOf(obj);
             if (i > -1) {
                 obj.sector = undefined;
-                return !!this.objs.splice(i, 1);
+                return !!this.objs.splice(i, 1).length;
             }
         }
         tick() {
@@ -77,29 +95,23 @@ var Game;
                 obj.tick();
         }
         show() {
-            if (this.active)
-                return false;
+            if (this.on())
+                return;
+            Sector.Active++;
             for (let obj of this.objs)
                 obj.show();
-            this.active = true;
             Renderer.scene.add(this.group);
-            Sector.Active++;
-            return true;
         }
         hide() {
-            if (!this.active)
-                return false;
+            if (this.off())
+                return;
+            Sector.Active--;
             for (let obj of this.objs)
                 obj.hide();
-            this.active = false;
             Renderer.scene.remove(this.group);
-            Sector.Active--;
-            return true;
         }
         objs_() { return this.objs; }
     }
-    Sector.Num = 0;
-    Sector.Active = 0;
     Game.Sector = Sector;
     class Center {
         constructor(galaxy) {
@@ -108,7 +120,7 @@ var Game;
             this.shown = [];
         }
         crawl() {
-            const spread = 2; // this is * 2
+            const spread = 3; // this is * 2
             for (let y = -spread; y < spread; y++) {
                 for (let x = -spread; x < spread; x++) {
                     let pos = pts.add(this.big, [x, y]);
@@ -124,7 +136,7 @@ var Game;
             }
         }
         off() {
-            const outside = 3;
+            const outside = 4;
             let i = this.shown.length;
             while (i--) {
                 let s;
@@ -139,9 +151,9 @@ var Game;
         }
     }
     Game.Center = Center;
-    class Obj {
+    class Obj extends Countable {
         constructor() {
-            this.active = false;
+            super();
             this.wpos = [0, 0];
             this.rpos = [0, 0];
             this.size = [100, 100];
@@ -154,19 +166,17 @@ var Game;
         }
         show() {
             var _a;
-            if (this.active)
+            if (this.on())
                 return;
-            (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.show();
-            this.active = true;
             Obj.Active++;
+            (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.show();
         }
         hide() {
             var _a;
-            if (!this.active)
+            if (this.off())
                 return;
-            (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.hide();
-            this.active = false;
             Obj.Active--;
+            (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.hide();
         }
         pose() {
             this.rpos = pts.mult(this.wpos, Galaxy.Unit);
@@ -194,13 +204,11 @@ var Game;
                 return true;
         }
     }
-    Obj.Num = 0;
-    Obj.Active = 0;
     Game.Obj = Obj;
-    class Drawable {
+    class Drawable extends Countable {
         constructor(obj) {
+            super();
             this.obj = obj;
-            this.active = false;
             Drawable.Num++;
         }
         done() {
@@ -216,23 +224,19 @@ var Game;
         }
         show() {
             var _a;
-            if (this.active)
+            if (this.on())
                 return;
-            (_a = this.shape) === null || _a === void 0 ? void 0 : _a.setup();
-            this.active = true;
             Drawable.Active++;
+            (_a = this.shape) === null || _a === void 0 ? void 0 : _a.setup();
         }
         hide() {
             var _a;
-            if (!this.active)
+            if (this.off())
                 return;
-            (_a = this.shape) === null || _a === void 0 ? void 0 : _a.dispose();
-            this.active = false;
             Drawable.Active--;
+            (_a = this.shape) === null || _a === void 0 ? void 0 : _a.dispose();
         }
     }
-    Drawable.Num = 0;
-    Drawable.Active = 0;
     Game.Drawable = Drawable;
     class Shape {
         constructor(drawable) {

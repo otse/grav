@@ -88,7 +88,7 @@ namespace Renderer {
 		renderer.clear();
 		renderer.render(scene, camera);
 
-		renderer.setRenderTarget(null); // Naar scherm
+		renderer.setRenderTarget(null);
 		renderer.clear();
 		renderer.render(scene2, camera);
 	}
