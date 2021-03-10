@@ -8,13 +8,14 @@ import Renderer from "./Renderer";
 class Countable {
 	static Num = 0;
 	static Active = 0;
-	active = false;
-	on() {
+	protected active = false;
+	isActive() { return this.active };
+	protected on() {
 		if (this.active)
 			return true;
 		this.active = true;
 	}
-	off() {
+	protected off() {
 		if (!this.active)
 			return true;
 		this.active = false;
@@ -33,7 +34,7 @@ namespace Game {
 		update(wpos: Vec2) {
 			// lay out sectors in a grid
 			this.center.big = Galaxy.big(wpos);
-			this.center.off();
+			this.center.offs();
 			this.center.crawl();
 		}
 		atnullable(x, y): Sector | undefined {
@@ -48,7 +49,7 @@ namespace Game {
 			let ig = Galaxy.big(wpos);
 			return this.at(ig[0], ig[1]);
 		}
-		make(x, y): Sector {
+		protected make(x, y): Sector {
 			let s = this.atnullable(x, y);
 			if (s)
 				return s;
@@ -83,7 +84,7 @@ namespace Game {
 			if (i == -1) {
 				this.objs.push(obj);
 				obj.sector = this;
-				if (this.active)
+				if (this.isActive())
 					obj.show();
 			}
 		}
@@ -129,7 +130,7 @@ namespace Game {
 					let s = this.galaxy.atnullable(pos[0], pos[1]);
 					if (!s)
 						continue;
-					if (!s.active) {
+					if (!s.isActive()) {
 						this.shown.push(s);
 						console.log(' show ! ');
 						s.show();
@@ -138,7 +139,7 @@ namespace Game {
 			}
 
 		}
-		off() {
+		offs() {
 			const outside = 4;
 			let i = this.shown.length;
 			while (i--) {

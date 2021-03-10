@@ -278,6 +278,8 @@ void main() {
         constructor() {
             this.active = false;
         }
+        isActive() { return this.active; }
+        ;
         on() {
             if (this.active)
                 return true;
@@ -301,7 +303,7 @@ void main() {
             update(wpos) {
                 // lay out sectors in a grid
                 this.center.big = Galaxy.big(wpos);
-                this.center.off();
+                this.center.offs();
                 this.center.crawl();
             }
             atnullable(x, y) {
@@ -349,7 +351,7 @@ void main() {
                 if (i == -1) {
                     this.objs.push(obj);
                     obj.sector = this;
-                    if (this.active)
+                    if (this.isActive())
                         obj.show();
                 }
             }
@@ -397,7 +399,7 @@ void main() {
                         let s = this.galaxy.atnullable(pos[0], pos[1]);
                         if (!s)
                             continue;
-                        if (!s.active) {
+                        if (!s.isActive()) {
                             this.shown.push(s);
                             console.log(' show ! ');
                             s.show();
@@ -405,7 +407,7 @@ void main() {
                     }
                 }
             }
-            off() {
+            offs() {
                 const outside = 4;
                 let i = this.shown.length;
                 while (i--) {
