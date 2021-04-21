@@ -1,7 +1,7 @@
 import App from "./App";
 import pts from "./Pts";
 import Renderer from "./Renderer";
-import Game from "./Game";
+import Core from "./Core";
 import Game3 from "./Game3";
 import Hooks from "./Hooks";
 var Game2;
@@ -11,7 +11,7 @@ var Game2;
     })(globals = Game2.globals || (Game2.globals = {}));
     function start() {
         globals.wlrd = Game2.World.make();
-        globals.galaxy = new Game.Galaxy(10);
+        globals.galaxy = new Core.Galaxy(10);
         Hooks.start();
     }
     Game2.start = start;
@@ -40,7 +40,7 @@ var Game2;
             this.move();
             this.mouse();
             this.stats();
-            let pos = Game.Galaxy.unproject(this.view);
+            let pos = Core.Galaxy.unproject(this.view);
             globals.galaxy.update(pos);
         }
         mouse() {
@@ -52,7 +52,7 @@ var Game2;
             if (App.button(0) == 1) {
                 console.log('clicked the view');
                 let rock = new Game3.Rock;
-                rock.wpos = pts.divide(this.mpos, Game.Galaxy.Unit); // Galaxy.unproject
+                rock.wpos = pts.divide(this.mpos, Core.Galaxy.Unit); // Galaxy.unproject
                 rock.done();
                 this.add(rock);
             }
@@ -81,9 +81,9 @@ var Game2;
             crunch += `mouse: ${pts.to_string(App.mouse())}<br /><br />`;
             crunch += `world view: ${pts.to_string(this.view)}<br />`;
             crunch += `world pos: ${pts.to_string(this.pos)}<br /><br />`;
-            crunch += `sectors: ${Game.Sector.Active} / ${Game.Sector.Num}<br />`;
-            crunch += `game objs: ${Game.Obj.Active} / ${Game.Obj.Num}<br />`;
-            crunch += `drawables: ${Game.Drawable.Active} / ${Game.Drawable.Num}<br />`;
+            crunch += `sectors: ${Core.Sector.Active} / ${Core.Sector.Num}<br />`;
+            crunch += `game objs: ${Core.Obj.Active} / ${Core.Obj.Num}<br />`;
+            crunch += `drawables: ${Core.Drawable.Active} / ${Core.Drawable.Num}<br />`;
             App.sethtml('.stats', crunch);
         }
         start() {
@@ -92,7 +92,7 @@ var Game2;
         }
     }
     Game2.World = World;
-    class Ply extends Game.Obj {
+    class Ply extends Core.Obj {
         static make() {
             let ply = new Ply;
             ply.done();
@@ -102,13 +102,11 @@ var Game2;
             super();
         }
         done() {
-            let drawable = new Game.Drawable(this);
-            drawable.done();
-            let quad = new Game.Quad(drawable);
-            quad.img = 'redfighter0005';
-            quad.done();
-            this.drawable = drawable;
-            this.drawable.shape = quad;
+            let drawable = new Core.Drawable({ obj: this });
+            let shape = new Core.Rectangle({
+                drawable: drawable,
+                img: 'redfighter0005'
+            });
             super.done();
         }
         tick() {

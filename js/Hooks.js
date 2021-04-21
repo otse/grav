@@ -1,10 +1,10 @@
-import Game from "./Game";
+import Core from "./Core";
 // high level game happenings
 var Hooks;
 (function (Hooks) {
     function start() {
         console.log(' hooks start ');
-        Game.Sector.hooks = {
+        Core.Sector.hooks = {
             onCreate: SectorOnCreate
         };
     }

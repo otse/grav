@@ -208,13 +208,11 @@ var Core;
     }
     Core.Obj = Obj;
     class Drawable extends Countable {
-        constructor(obj) {
+        constructor(x) {
             super();
-            this.obj = obj;
+            this.x = x;
             Drawable.Num++;
-        }
-        done() {
-            // leave empty
+            x.obj.drawable = this;
         }
         update() {
             var _a;
@@ -240,12 +238,20 @@ var Core;
         }
     }
     Core.Drawable = Drawable;
-    class Shape {
-        constructor(drawable) {
-            this.drawable = drawable;
+    class DrawableMulti extends Drawable {
+        show() {
+            super.show();
         }
-        done() {
-            // implement
+        hide() {
+            super.hide();
+        }
+    }
+    Core.DrawableMulti = DrawableMulti;
+    ;
+    class Shape {
+        constructor(x) {
+            this.x = x;
+            x.drawable.shape = this;
         }
         update() {
             // implement
@@ -258,19 +264,19 @@ var Core;
         }
     }
     Core.Shape = Shape;
-    class Quad extends Shape {
-        constructor(drawable) {
-            super(drawable);
-            this.img = 'forgot to set';
-        }
-        done() {
+    ;
+    class Rectangle extends Shape {
+        constructor(y) {
+            super(y);
+            this.y = y;
+            this.setup();
         }
         update() {
             var _a, _b;
             if (!this.mesh)
                 return;
-            this.mesh.rotation.z = this.drawable.obj.rz;
-            (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...this.drawable.obj.rpos, 0]);
+            this.mesh.rotation.z = this.y.drawable.x.obj.rz;
+            (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...this.y.drawable.x.obj.rpos, 0]);
             (_b = this.mesh) === null || _b === void 0 ? void 0 : _b.updateMatrix();
         }
         dispose() {
@@ -282,10 +288,10 @@ var Core;
             (_c = this.mesh.parent) === null || _c === void 0 ? void 0 : _c.remove(this.mesh);
         }
         setup() {
-            let w = this.drawable.obj.size[0];
-            let h = this.drawable.obj.size[1];
+            let w = this.y.drawable.x.obj.size[0];
+            let h = this.y.drawable.x.obj.size[1];
             this.geometry = new PlaneBufferGeometry(w, h, 2, 2);
-            let map = Renderer.loadtexture(`img/${this.img}.png`);
+            let map = Renderer.loadtexture(`img/${this.y.img}.png`);
             this.material = new MeshBasicMaterial({
                 map: map,
                 transparent: true,
@@ -294,12 +300,12 @@ var Core;
             this.mesh.frustumCulled = false;
             this.mesh.matrixAutoUpdate = false;
             this.update();
-            if (this.drawable.obj.sector)
-                this.drawable.obj.sector.group.add(this.mesh);
+            if (this.y.drawable.x.obj.sector)
+                this.y.drawable.x.obj.sector.group.add(this.mesh);
             else
                 Renderer.scene.add(this.mesh);
         }
     }
-    Core.Quad = Quad;
+    Core.Rectangle = Rectangle;
 })(Core || (Core = {}));
 export default Core;

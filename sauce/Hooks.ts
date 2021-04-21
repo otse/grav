@@ -1,4 +1,4 @@
-import Game from "./Game";
+import Core from "./Core";
 import Game2 from "./Game2";
 import Game3 from "./Game3";
 
@@ -8,7 +8,7 @@ namespace Hooks {
 	export function start() {
 		console.log(' hooks start ');
 		
-		Game.Sector.hooks = {
+		Core.Sector.hooks = {
 			onCreate: SectorOnCreate
 		};
 		

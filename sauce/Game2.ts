@@ -5,7 +5,7 @@ import App from "./App";
 import pts from "./Pts";
 import Renderer from "./Renderer";
 
-import Game from "./Game";
+import Core from "./Core";
 import Game3 from "./Game3";
 import Hooks from "./Hooks";
 
@@ -13,11 +13,11 @@ namespace Game2 {
 	export namespace globals {
 		export var wlrd: World;
 		export var ply: Ply;
-		export var galaxy: Game.Galaxy;
+		export var galaxy: Core.Galaxy;
 	}
 	export function start() {
 		globals.wlrd = Game2.World.make();
-		globals.galaxy = new Game.Galaxy(10);
+		globals.galaxy = new Core.Galaxy(10);
 		Hooks.start();
 	}
 	export class World {
@@ -33,18 +33,18 @@ namespace Game2 {
 		}
 		constructor() {
 		}
-		add(obj: Game.Obj) {
+		add(obj: Core.Obj) {
 			let s = globals.galaxy.atw(obj.wpos);
 			s.add(obj);
 		}
-		remove(obj: Game.Obj) {
+		remove(obj: Core.Obj) {
 			obj.sector?.remove(obj);
 		}
 		update() {
 			this.move();
 			this.mouse();
 			this.stats();
-			let pos = Game.Galaxy.unproject(this.view);
+			let pos = Core.Galaxy.unproject(this.view);
 			globals.galaxy.update(pos);
 		}
 		mouse() {
@@ -56,7 +56,7 @@ namespace Game2 {
 			if (App.button(0) == 1) {
 				console.log('clicked the view');
 				let rock = new Game3.Rock;
-				rock.wpos = pts.divide(this.mpos, Game.Galaxy.Unit); // Galaxy.unproject
+				rock.wpos = pts.divide(this.mpos, Core.Galaxy.Unit); // Galaxy.unproject
 				rock.done();
 				this.add(rock);
 			}
@@ -80,9 +80,9 @@ namespace Game2 {
 			crunch += `mouse: ${pts.to_string(App.mouse())}<br /><br />`;
 			crunch += `world view: ${pts.to_string(this.view)}<br />`;
 			crunch += `world pos: ${pts.to_string(this.pos)}<br /><br />`;
-			crunch += `sectors: ${Game.Sector.Active} / ${Game.Sector.Num}<br />`;
-			crunch += `game objs: ${Game.Obj.Active} / ${Game.Obj.Num}<br />`;
-			crunch += `drawables: ${Game.Drawable.Active} / ${Game.Drawable.Num}<br />`;
+			crunch += `sectors: ${Core.Sector.Active} / ${Core.Sector.Num}<br />`;
+			crunch += `game objs: ${Core.Obj.Active} / ${Core.Obj.Num}<br />`;
+			crunch += `drawables: ${Core.Drawable.Active} / ${Core.Drawable.Num}<br />`;
 			App.sethtml('.stats', crunch);
 		}
 		start() {
@@ -90,7 +90,7 @@ namespace Game2 {
 			this.add(globals.ply);
 		}
 	}
-	export class Ply extends Game.Obj {
+	export class Ply extends Core.Obj {
 		static make() {
 			let ply = new Ply;
 			ply.done();
@@ -100,13 +100,11 @@ namespace Game2 {
 			super();
 		}
 		done() {
-			let drawable = new Game.Drawable(this);
-			drawable.done();
-			let quad = new Game.Quad(drawable);
-			quad.img = 'redfighter0005';
-			quad.done();
-			this.drawable = drawable;
-			this.drawable.shape = quad;
+			let drawable = new Core.Drawable({ obj: this });
+			let shape = new Core.Rectangle({
+				drawable: drawable,
+				img: 'redfighter0005'
+			});
 			super.done();
 		}
 		tick() {
@@ -114,10 +112,10 @@ namespace Game2 {
 		}
 	}
 	export namespace Util {
-		export function Galx_towpos(s: Game.Sector, wpos: Vec2) {
+		export function Galx_towpos(s: Core.Sector, wpos: Vec2) {
 		}
 
-		export function Sector_getobjat(s: Game.Sector, wpos: Vec2) {
+		export function Sector_getobjat(s: Core.Sector, wpos: Vec2) {
 			for (let obj of s.objs_())
 				if (pts.equals(obj.wpos, wpos))
 					return obj;

@@ -1,4 +1,4 @@
-import Game from "./Game";
+import Core from "./Core";
 import Game2 from "./Game2";
 var TestingChamber;
 (function (TestingChamber) {
@@ -8,7 +8,7 @@ var TestingChamber;
         console.log('...regardless of your os or browsers dpi setting');
         for (let y = 0; y < 50; y++) {
             for (let x = 0; x < 50; x++) {
-                let conversion = 100 / Game.Galaxy.Unit;
+                let conversion = 100 / Core.Galaxy.Unit;
                 let square = TestingSquare.make();
                 square.wpos = [x * conversion, y * conversion];
                 square.done();
@@ -17,7 +17,7 @@ var TestingChamber;
         }
     }
     TestingChamber.start = start;
-    class TestingSquare extends Game.Obj {
+    class TestingSquare extends Core.Obj {
         constructor() {
             super();
         }
@@ -26,14 +26,11 @@ var TestingChamber;
         }
         done() {
             this.size = [100, 100];
-            let drawable = new Game.Drawable(this);
-            drawable.done();
-            let quad = new Game.Quad(drawable);
-            quad.img = 'test100';
-            quad.done();
-            this.drawable = drawable;
-            this.drawable.shape = quad;
-            this.quad = quad;
+            let drawable = new Core.Drawable({ obj: this });
+            let quad = new Core.Rectangle({
+                drawable: drawable,
+                img: 'test100'
+            });
             super.done();
         }
         tick() {

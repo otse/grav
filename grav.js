@@ -293,8 +293,8 @@ void main() {
     }
     Countable.Num = 0;
     Countable.Active = 0;
-    var Game;
-    (function (Game) {
+    var Core;
+    (function (Core) {
         class Galaxy {
             constructor(span) {
                 this.arrays = [];
@@ -329,12 +329,12 @@ void main() {
                 return pts.floor(pts.divide(wpos, Galaxy.SectorSpan));
             }
             static unproject(pixel) {
-                return pts.divide(pixel, Game.Galaxy.Unit);
+                return pts.divide(pixel, Core.Galaxy.Unit);
             }
         }
         Galaxy.Unit = 50;
         Galaxy.SectorSpan = 10;
-        Game.Galaxy = Galaxy;
+        Core.Galaxy = Galaxy;
         class Sector extends Countable {
             constructor(x, y, galaxy) {
                 var _a;
@@ -384,7 +384,7 @@ void main() {
             }
             objs_() { return this.objs; }
         }
-        Game.Sector = Sector;
+        Core.Sector = Sector;
         class Center {
             constructor(galaxy) {
                 this.galaxy = galaxy;
@@ -422,7 +422,7 @@ void main() {
                 }
             }
         }
-        Game.Center = Center;
+        Core.Center = Center;
         class Obj extends Countable {
             constructor() {
                 super();
@@ -476,15 +476,13 @@ void main() {
                     return true;
             }
         }
-        Game.Obj = Obj;
+        Core.Obj = Obj;
         class Drawable extends Countable {
-            constructor(obj) {
+            constructor(x) {
                 super();
-                this.obj = obj;
+                this.x = x;
                 Drawable.Num++;
-            }
-            done() {
-                // leave empty
+                x.obj.drawable = this;
             }
             update() {
                 var _a;
@@ -509,13 +507,20 @@ void main() {
                 (_a = this.shape) === null || _a === void 0 ? void 0 : _a.dispose();
             }
         }
-        Game.Drawable = Drawable;
-        class Shape {
-            constructor(drawable) {
-                this.drawable = drawable;
+        Core.Drawable = Drawable;
+        class DrawableMulti extends Drawable {
+            show() {
+                super.show();
             }
-            done() {
-                // implement
+            hide() {
+                super.hide();
+            }
+        }
+        Core.DrawableMulti = DrawableMulti;
+        class Shape {
+            constructor(x) {
+                this.x = x;
+                x.drawable.shape = this;
             }
             update() {
                 // implement
@@ -527,20 +532,19 @@ void main() {
                 // implement
             }
         }
-        Game.Shape = Shape;
-        class Quad extends Shape {
-            constructor(drawable) {
-                super(drawable);
-                this.img = 'forgot to set';
-            }
-            done() {
+        Core.Shape = Shape;
+        class Rectangle extends Shape {
+            constructor(y) {
+                super(y);
+                this.y = y;
+                this.setup();
             }
             update() {
                 var _a, _b;
                 if (!this.mesh)
                     return;
-                this.mesh.rotation.z = this.drawable.obj.rz;
-                (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...this.drawable.obj.rpos, 0]);
+                this.mesh.rotation.z = this.y.drawable.x.obj.rz;
+                (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...this.y.drawable.x.obj.rpos, 0]);
                 (_b = this.mesh) === null || _b === void 0 ? void 0 : _b.updateMatrix();
             }
             dispose() {
@@ -552,10 +556,10 @@ void main() {
                 (_c = this.mesh.parent) === null || _c === void 0 ? void 0 : _c.remove(this.mesh);
             }
             setup() {
-                let w = this.drawable.obj.size[0];
-                let h = this.drawable.obj.size[1];
+                let w = this.y.drawable.x.obj.size[0];
+                let h = this.y.drawable.x.obj.size[1];
                 this.geometry = new THREE.PlaneBufferGeometry(w, h, 2, 2);
-                let map = Renderer$1.loadtexture(`img/${this.img}.png`);
+                let map = Renderer$1.loadtexture(`img/${this.y.img}.png`);
                 this.material = new THREE.MeshBasicMaterial({
                     map: map,
                     transparent: true,
@@ -564,50 +568,46 @@ void main() {
                 this.mesh.frustumCulled = false;
                 this.mesh.matrixAutoUpdate = false;
                 this.update();
-                if (this.drawable.obj.sector)
-                    this.drawable.obj.sector.group.add(this.mesh);
+                if (this.y.drawable.x.obj.sector)
+                    this.y.drawable.x.obj.sector.group.add(this.mesh);
                 else
                     Renderer$1.scene.add(this.mesh);
             }
         }
-        Game.Quad = Quad;
-    })(Game || (Game = {}));
-    var Game$1 = Game;
+        Core.Rectangle = Rectangle;
+    })(Core || (Core = {}));
+    var Core$1 = Core;
 
     var Game3;
     (function (Game3) {
         let globals;
         (function (globals) {
         })(globals = Game3.globals || (Game3.globals = {}));
-        class Ping extends Game$1.Obj {
+        class Ping extends Core$1.Obj {
             constructor() {
                 super();
             }
             done() {
-                let drawable = new Game$1.Drawable(this);
-                drawable.done();
-                let shape = new Game$1.Quad(drawable);
-                shape.img = 'redfighter0005';
-                shape.done();
-                this.drawable = drawable;
-                this.drawable.shape = shape;
+                let drawable = new Core$1.Drawable({ obj: this });
+                let shape = new Core$1.Rectangle({
+                    drawable: drawable,
+                    img: 'redfighter0005'
+                });
                 super.done();
             }
         }
         Game3.Ping = Ping;
-        class Rock extends Game$1.Obj {
+        class Rock extends Core$1.Obj {
             constructor() {
                 super();
             }
             done() {
                 this.size = [200, 200];
-                let drawable = new Game$1.Drawable(this);
-                drawable.done();
-                let shape = new Game$1.Quad(drawable);
-                shape.img = 'pngwing.com';
-                shape.done();
-                this.drawable = drawable;
-                this.drawable.shape = shape;
+                let drawable = new Core$1.Drawable({ obj: this });
+                let shape = new Core$1.Rectangle({
+                    drawable: drawable,
+                    img: 'pngwing.com'
+                });
                 super.done();
             }
             tick() {
@@ -624,7 +624,7 @@ void main() {
     (function (Hooks) {
         function start() {
             console.log(' hooks start ');
-            Game$1.Sector.hooks = {
+            Core$1.Sector.hooks = {
                 onCreate: SectorOnCreate
             };
         }
@@ -642,7 +642,7 @@ void main() {
         })(globals = Game2.globals || (Game2.globals = {}));
         function start() {
             globals.wlrd = Game2.World.make();
-            globals.galaxy = new Game$1.Galaxy(10);
+            globals.galaxy = new Core$1.Galaxy(10);
             Hooks$1.start();
         }
         Game2.start = start;
@@ -671,7 +671,7 @@ void main() {
                 this.move();
                 this.mouse();
                 this.stats();
-                let pos = Game$1.Galaxy.unproject(this.view);
+                let pos = Core$1.Galaxy.unproject(this.view);
                 globals.galaxy.update(pos);
             }
             mouse() {
@@ -683,7 +683,7 @@ void main() {
                 if (App$1.button(0) == 1) {
                     console.log('clicked the view');
                     let rock = new Game3$1.Rock;
-                    rock.wpos = pts.divide(this.mpos, Game$1.Galaxy.Unit); // Galaxy.unproject
+                    rock.wpos = pts.divide(this.mpos, Core$1.Galaxy.Unit); // Galaxy.unproject
                     rock.done();
                     this.add(rock);
                 }
@@ -712,9 +712,9 @@ void main() {
                 crunch += `mouse: ${pts.to_string(App$1.mouse())}<br /><br />`;
                 crunch += `world view: ${pts.to_string(this.view)}<br />`;
                 crunch += `world pos: ${pts.to_string(this.pos)}<br /><br />`;
-                crunch += `sectors: ${Game$1.Sector.Active} / ${Game$1.Sector.Num}<br />`;
-                crunch += `game objs: ${Game$1.Obj.Active} / ${Game$1.Obj.Num}<br />`;
-                crunch += `drawables: ${Game$1.Drawable.Active} / ${Game$1.Drawable.Num}<br />`;
+                crunch += `sectors: ${Core$1.Sector.Active} / ${Core$1.Sector.Num}<br />`;
+                crunch += `game objs: ${Core$1.Obj.Active} / ${Core$1.Obj.Num}<br />`;
+                crunch += `drawables: ${Core$1.Drawable.Active} / ${Core$1.Drawable.Num}<br />`;
                 App$1.sethtml('.stats', crunch);
             }
             start() {
@@ -723,7 +723,7 @@ void main() {
             }
         }
         Game2.World = World;
-        class Ply extends Game$1.Obj {
+        class Ply extends Core$1.Obj {
             static make() {
                 let ply = new Ply;
                 ply.done();
@@ -733,13 +733,11 @@ void main() {
                 super();
             }
             done() {
-                let drawable = new Game$1.Drawable(this);
-                drawable.done();
-                let quad = new Game$1.Quad(drawable);
-                quad.img = 'redfighter0005';
-                quad.done();
-                this.drawable = drawable;
-                this.drawable.shape = quad;
+                let drawable = new Core$1.Drawable({ obj: this });
+                let shape = new Core$1.Rectangle({
+                    drawable: drawable,
+                    img: 'redfighter0005'
+                });
                 super.done();
             }
             tick() {
@@ -770,7 +768,7 @@ void main() {
             console.log('...regardless of your os or browsers dpi setting');
             for (let y = 0; y < 50; y++) {
                 for (let x = 0; x < 50; x++) {
-                    let conversion = 100 / Game$1.Galaxy.Unit;
+                    let conversion = 100 / Core$1.Galaxy.Unit;
                     let square = TestingSquare.make();
                     square.wpos = [x * conversion, y * conversion];
                     square.done();
@@ -779,7 +777,7 @@ void main() {
             }
         }
         TestingChamber.start = start;
-        class TestingSquare extends Game$1.Obj {
+        class TestingSquare extends Core$1.Obj {
             constructor() {
                 super();
             }
@@ -788,14 +786,11 @@ void main() {
             }
             done() {
                 this.size = [100, 100];
-                let drawable = new Game$1.Drawable(this);
-                drawable.done();
-                let quad = new Game$1.Quad(drawable);
-                quad.img = 'test100';
-                quad.done();
-                this.drawable = drawable;
-                this.drawable.shape = quad;
-                this.quad = quad;
+                let drawable = new Core$1.Drawable({ obj: this });
+                let quad = new Core$1.Rectangle({
+                    drawable: drawable,
+                    img: 'test100'
+                });
                 super.done();
             }
             tick() {

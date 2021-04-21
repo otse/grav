@@ -1,4 +1,4 @@
-import Game from "./Game";
+import Core from "./Core";
 import Game2 from "./Game2";
 
 import TestingChamber from "./TestingChamber";

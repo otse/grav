@@ -22,7 +22,7 @@ class Countable {
 	}
 };
 
-namespace Game {
+namespace Core {
 	export class Galaxy {
 		static readonly Unit = 50;
 		static readonly SectorSpan = 10;
@@ -60,7 +60,7 @@ namespace Game {
 			return pts.floor(pts.divide(wpos, Galaxy.SectorSpan));
 		}
 		static unproject(pixel: Vec2): Vec2 { // wpos
-			return pts.divide(pixel, Game.Galaxy.Unit);
+			return pts.divide(pixel, Core.Galaxy.Unit);
 		}
 	}
 	interface SectorHooks {
@@ -208,12 +208,10 @@ namespace Game {
 	}
 	export class Drawable extends Countable {
 		shape: Shape | undefined;
-		constructor(public readonly obj: Obj) {
+		constructor(public readonly x: { obj: Obj }) {
 			super();
 			Drawable.Num++;
-		}
-		done() {
-			// leave empty
+			x.obj.drawable = this;
 		}
 		update() {
 			this.shape?.update();
@@ -236,12 +234,18 @@ namespace Game {
 		}
 
 	}
-	export class Shape {
-		constructor(public readonly drawable: Drawable) {
-
+	export class DrawableMulti extends Drawable {
+		show() {
+			super.show();
 		}
-		done() {
-			// implement
+		hide() {
+			super.hide()
+		}
+	};
+	export class Shape {
+		test: number;
+		constructor(public readonly x: { drawable: Drawable }) {
+			x.drawable.shape = this;
 		}
 		update() {
 			// implement
@@ -253,21 +257,23 @@ namespace Game {
 			// implement
 		}
 	}
-	export class Quad extends Shape {
-		img: string = 'forgot to set';
+	export namespace Shape {
+		export type X = Shape['x'];
+	};
+	export class Rectangle extends Shape {
 		mesh: Mesh | undefined;
 		material: MeshBasicMaterial;
 		geometry: PlaneBufferGeometry;
-		constructor(drawable: Drawable) {
-			super(drawable);
-		}
-		done() {
+
+		constructor(public readonly y: { img: string } & Shape.X) {
+			super(y);
+			this.setup();
 		}
 		update() {
 			if (!this.mesh)
 				return;
-			this.mesh.rotation.z = this.drawable.obj.rz;
-			this.mesh?.position.fromArray([...this.drawable.obj.rpos, 0]);
+			this.mesh.rotation.z = this.y.drawable.x.obj.rz;
+			this.mesh?.position.fromArray([...this.y.drawable.x.obj.rpos, 0]);
 			this.mesh?.updateMatrix();
 		}
 		dispose() {
@@ -278,10 +284,10 @@ namespace Game {
 			this.mesh.parent?.remove(this.mesh);
 		}
 		setup() {
-			let w = this.drawable.obj.size[0];
-			let h = this.drawable.obj.size[1];
+			let w = this.y.drawable.x.obj.size[0];
+			let h = this.y.drawable.x.obj.size[1];
 			this.geometry = new PlaneBufferGeometry(w, h, 2, 2);
-			let map = Renderer.loadtexture(`img/${this.img}.png`);
+			let map = Renderer.loadtexture(`img/${this.y.img}.png`);
 			this.material = new MeshBasicMaterial({
 				map: map,
 				transparent: true,
@@ -292,12 +298,12 @@ namespace Game {
 			this.mesh.frustumCulled = false;
 			this.mesh.matrixAutoUpdate = false;
 			this.update();
-			if (this.drawable.obj.sector)
-				this.drawable.obj.sector.group.add(this.mesh);
+			if (this.y.drawable.x.obj.sector)
+				this.y.drawable.x.obj.sector.group.add(this.mesh);
 			else
 				Renderer.scene.add(this.mesh);
 		}
 	}
 }
 
-export default Game;
+export default Core;

@@ -1,38 +1,34 @@
-import Game from "./Game";
+import Core from "./Core";
 var Game3;
 (function (Game3) {
     let globals;
     (function (globals) {
     })(globals = Game3.globals || (Game3.globals = {}));
-    class Ping extends Game.Obj {
+    class Ping extends Core.Obj {
         constructor() {
             super();
         }
         done() {
-            let drawable = new Game.Drawable(this);
-            drawable.done();
-            let shape = new Game.Quad(drawable);
-            shape.img = 'redfighter0005';
-            shape.done();
-            this.drawable = drawable;
-            this.drawable.shape = shape;
+            let drawable = new Core.Drawable({ obj: this });
+            let shape = new Core.Rectangle({
+                drawable: drawable,
+                img: 'redfighter0005'
+            });
             super.done();
         }
     }
     Game3.Ping = Ping;
-    class Rock extends Game.Obj {
+    class Rock extends Core.Obj {
         constructor() {
             super();
         }
         done() {
             this.size = [200, 200];
-            let drawable = new Game.Drawable(this);
-            drawable.done();
-            let shape = new Game.Quad(drawable);
-            shape.img = 'pngwing.com';
-            shape.done();
-            this.drawable = drawable;
-            this.drawable.shape = shape;
+            let drawable = new Core.Drawable({ obj: this });
+            let shape = new Core.Rectangle({
+                drawable: drawable,
+                img: 'pngwing.com'
+            });
             super.done();
         }
         tick() {
