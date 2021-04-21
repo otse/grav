@@ -1,5 +1,5 @@
 import Core from "./Core";
-import Game2 from "./Game2";
+import Game from "./Game";
 var TestingChamber;
 (function (TestingChamber) {
     function start() {
@@ -11,8 +11,8 @@ var TestingChamber;
                 let conversion = 100 / Core.Galaxy.Unit;
                 let square = TestingSquare.make();
                 square.wpos = [x * conversion, y * conversion];
-                square.done();
-                Game2.globals.wlrd.add(square);
+                square.make();
+                Game.globals.wrld.add(square);
             }
         }
     }
@@ -24,19 +24,18 @@ var TestingChamber;
         static make() {
             return new TestingSquare;
         }
-        done() {
+        make() {
             this.size = [100, 100];
             let drawable = new Core.Drawable({ obj: this });
             let quad = new Core.Rectangle({
                 drawable: drawable,
                 img: 'test100'
             });
-            super.done();
         }
         tick() {
             //super.update();
             return;
-            if (this.moused(Game2.globals.wlrd.mpos)) {
+            if (this.moused(Game.globals.wrld.mpos)) {
                 console.log('hover testing square');
                 this.quad.material.color.set('red');
             }

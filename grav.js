@@ -396,13 +396,13 @@ void main() {
                 for (let y = -spread; y < spread; y++) {
                     for (let x = -spread; x < spread; x++) {
                         let pos = pts.add(this.big, [x, y]);
-                        let s = this.galaxy.atnullable(pos[0], pos[1]);
-                        if (!s)
+                        let sector = this.galaxy.atnullable(pos[0], pos[1]);
+                        if (!sector)
                             continue;
-                        if (!s.isActive()) {
-                            this.shown.push(s);
+                        if (!sector.isActive()) {
+                            this.shown.push(sector);
                             console.log(' show ! ');
-                            s.show();
+                            sector.show();
                         }
                     }
                 }
@@ -411,12 +411,12 @@ void main() {
                 const outside = 4;
                 let i = this.shown.length;
                 while (i--) {
-                    let s;
-                    s = this.shown[i];
-                    s.tick();
-                    if (pts.dist(s.big, this.big) > outside) {
+                    let sector;
+                    sector = this.shown[i];
+                    sector.tick();
+                    if (pts.dist(sector.big, this.big) > outside) {
                         console.log(' hide !');
-                        s.hide();
+                        sector.hide();
                         this.shown.splice(i, 1);
                     }
                 }
@@ -441,6 +441,7 @@ void main() {
                 if (this.on())
                     return;
                 Obj.Active++;
+                this.update();
                 (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.show();
             }
             hide() {
@@ -450,20 +451,19 @@ void main() {
                 Obj.Active--;
                 (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.hide();
             }
-            pose() {
+            wrpose() {
                 this.rpos = pts.mult(this.wpos, Galaxy.Unit);
             }
             tick() {
             }
+            make() {
+                console.warn('obj.make');
+            }
             update() {
                 var _a;
-                this.pose();
+                this.wrpose();
                 this.bound();
                 (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.update();
-            }
-            done() {
-                this.pose();
-                this.bound();
             }
             bound() {
                 let div = pts.divide(this.size, 2);
@@ -578,46 +578,65 @@ void main() {
     })(Core || (Core = {}));
     var Core$1 = Core;
 
-    var Game3;
-    (function (Game3) {
+    var Objects;
+    (function (Objects) {
         let globals;
         (function (globals) {
-        })(globals = Game3.globals || (Game3.globals = {}));
-        class Ping extends Core$1.Obj {
+        })(globals = Objects.globals || (Objects.globals = {}));
+        class Ply extends Core$1.Obj {
+            static make() {
+                let ply = new Ply;
+                ply.make();
+                return ply;
+            }
             constructor() {
                 super();
             }
-            done() {
+            make() {
                 let drawable = new Core$1.Drawable({ obj: this });
                 let shape = new Core$1.Rectangle({
                     drawable: drawable,
                     img: 'redfighter0005'
                 });
-                super.done();
+            }
+            tick() {
+                super.update();
             }
         }
-        Game3.Ping = Ping;
+        Objects.Ply = Ply;
+        class Ping extends Core$1.Obj {
+            constructor() {
+                super();
+            }
+            make() {
+                let drawable = new Core$1.Drawable({ obj: this });
+                let shape = new Core$1.Rectangle({
+                    drawable: drawable,
+                    img: 'redfighter0005'
+                });
+            }
+        }
+        Objects.Ping = Ping;
         class Rock extends Core$1.Obj {
             constructor() {
                 super();
             }
-            done() {
+            make() {
                 this.size = [200, 200];
                 let drawable = new Core$1.Drawable({ obj: this });
                 let shape = new Core$1.Rectangle({
                     drawable: drawable,
                     img: 'pngwing.com'
                 });
-                super.done();
             }
             tick() {
                 this.rz += 0.002;
                 super.update();
             }
         }
-        Game3.Rock = Rock;
-    })(Game3 || (Game3 = {}));
-    var Game3$1 = Game3;
+        Objects.Rock = Rock;
+    })(Objects || (Objects = {}));
+    var Objects$1 = Objects;
 
     // high level game happenings
     var Hooks;
@@ -635,17 +654,17 @@ void main() {
     })(Hooks || (Hooks = {}));
     var Hooks$1 = Hooks;
 
-    var Game2;
-    (function (Game2) {
+    var Game;
+    (function (Game) {
         let globals;
         (function (globals) {
-        })(globals = Game2.globals || (Game2.globals = {}));
+        })(globals = Game.globals || (Game.globals = {}));
         function start() {
-            globals.wlrd = Game2.World.make();
+            globals.wrld = Game.World.make();
             globals.galaxy = new Core$1.Galaxy(10);
             Hooks$1.start();
         }
-        Game2.start = start;
+        Game.start = start;
         class World {
             constructor() {
                 //objs: Game.Obj[] = [];
@@ -660,14 +679,14 @@ void main() {
             chart(big) {
             }
             add(obj) {
-                let s = globals.galaxy.atw(obj.wpos);
-                s.add(obj);
+                let sector = globals.galaxy.atw(obj.wpos);
+                sector.add(obj);
             }
             remove(obj) {
                 var _a;
                 (_a = obj.sector) === null || _a === void 0 ? void 0 : _a.remove(obj);
             }
-            update() {
+            tick() {
                 this.move();
                 this.mouse();
                 this.stats();
@@ -682,9 +701,9 @@ void main() {
                 this.mpos = pts.add(this.view, mouse);
                 if (App$1.button(0) == 1) {
                     console.log('clicked the view');
-                    let rock = new Game3$1.Rock;
+                    let rock = new Objects$1.Rock;
                     rock.wpos = pts.divide(this.mpos, Core$1.Galaxy.Unit); // Galaxy.unproject
-                    rock.done();
+                    rock.make();
                     this.add(rock);
                 }
             }
@@ -718,33 +737,11 @@ void main() {
                 App$1.sethtml('.stats', crunch);
             }
             start() {
-                globals.ply = Ply.make();
+                globals.ply = Objects$1.Ply.make();
                 this.add(globals.ply);
             }
         }
-        Game2.World = World;
-        class Ply extends Core$1.Obj {
-            static make() {
-                let ply = new Ply;
-                ply.done();
-                return ply;
-            }
-            constructor() {
-                super();
-            }
-            done() {
-                let drawable = new Core$1.Drawable({ obj: this });
-                let shape = new Core$1.Rectangle({
-                    drawable: drawable,
-                    img: 'redfighter0005'
-                });
-                super.done();
-            }
-            tick() {
-                super.update();
-            }
-        }
-        Game2.Ply = Ply;
+        Game.World = World;
         let Util;
         (function (Util) {
             function Galx_towpos(s, wpos) {
@@ -756,9 +753,9 @@ void main() {
                         return obj;
             }
             Util.Sector_getobjat = Sector_getobjat;
-        })(Util = Game2.Util || (Game2.Util = {}));
-    })(Game2 || (Game2 = {}));
-    var Game2$1 = Game2;
+        })(Util = Game.Util || (Game.Util = {}));
+    })(Game || (Game = {}));
+    var Game$1 = Game;
 
     var TestingChamber;
     (function (TestingChamber) {
@@ -771,8 +768,8 @@ void main() {
                     let conversion = 100 / Core$1.Galaxy.Unit;
                     let square = TestingSquare.make();
                     square.wpos = [x * conversion, y * conversion];
-                    square.done();
-                    Game2$1.globals.wlrd.add(square);
+                    square.make();
+                    Game$1.globals.wrld.add(square);
                 }
             }
         }
@@ -784,14 +781,13 @@ void main() {
             static make() {
                 return new TestingSquare;
             }
-            done() {
+            make() {
                 this.size = [100, 100];
                 let drawable = new Core$1.Drawable({ obj: this });
                 let quad = new Core$1.Rectangle({
                     drawable: drawable,
                     img: 'test100'
                 });
-                super.done();
             }
             tick() {
                 //super.update();
@@ -857,7 +853,7 @@ void main() {
         Grav.critical = critical;
         function init() {
             console.log('grav init');
-            Game2$1.start();
+            Game$1.start();
             time = new Date().getTime();
             resourced('RC_UNDEFINED');
             resourced('POPULAR_ASSETS');
@@ -869,7 +865,7 @@ void main() {
             if (started)
                 return;
             console.log('grav starting');
-            Game2$1.globals.wlrd.start();
+            Game$1.globals.wrld.start();
             if (window.location.href.indexOf("#testingchamber") != -1)
                 TestingChamber$1.start();
             if (window.location.href.indexOf("#novar") != -1)
@@ -877,16 +873,16 @@ void main() {
             //setTimeout(() => Board.messageslide('', 'You get one cheap set of shoes, and a well-kept shovel.'), 1000);
             started = true;
         }
-        function update() {
+        function tick() {
             if (!started) {
                 reasonable_waiter();
                 return;
             }
-            Game2$1.globals.wlrd.update();
+            Game$1.globals.wrld.tick();
             //Board.update();
             //Ploppables.update();
         }
-        Grav.update = update;
+        Grav.tick = tick;
     })(Grav || (Grav = {}));
 
     var App;
@@ -954,7 +950,7 @@ void main() {
         function loop(timestamp) {
             requestAnimationFrame(loop);
             Renderer$1.update();
-            Grav.update();
+            Grav.tick();
             Renderer$1.render();
             App.wheel = 0;
             for (let b of [0, 1])

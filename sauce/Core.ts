@@ -127,13 +127,13 @@ namespace Core {
 			for (let y = -spread; y < spread; y++) {
 				for (let x = -spread; x < spread; x++) {
 					let pos = pts.add(this.big, [x, y]);
-					let s = this.galaxy.atnullable(pos[0], pos[1]);
-					if (!s)
+					let sector = this.galaxy.atnullable(pos[0], pos[1]);
+					if (!sector)
 						continue;
-					if (!s.isActive()) {
-						this.shown.push(s);
+					if (!sector.isActive()) {
+						this.shown.push(sector);
 						console.log(' show ! ');
-						s.show();
+						sector.show();
 					}
 				}
 			}
@@ -143,18 +143,18 @@ namespace Core {
 			const outside = 4;
 			let i = this.shown.length;
 			while (i--) {
-				let s: Sector;
-				s = this.shown[i];
-				s.tick();
-				if (pts.dist(s.big, this.big) > outside) {
+				let sector: Sector;
+				sector = this.shown[i];
+				sector.tick();
+				if (pts.dist(sector.big, this.big) > outside) {
 					console.log(' hide !');
-					s.hide();
+					sector.hide();
 					this.shown.splice(i, 1);
 				}
 			}
 		}
 	}
-	export class Obj extends Countable { // extend me
+	export class Obj extends Countable {
 		wpos: Vec2 = [0, 0];
 		rpos: Vec2 = [0, 0];
 		size: Vec2 = [100, 100];
@@ -173,6 +173,7 @@ namespace Core {
 			if (this.on())
 				return;
 			Obj.Active++;
+			this.update();
 			this.drawable?.show();
 		}
 		hide() {
@@ -181,19 +182,18 @@ namespace Core {
 			Obj.Active--;
 			this.drawable?.hide();
 		}
-		pose() {
+		wrpose() {
 			this.rpos = pts.mult(this.wpos, Galaxy.Unit);
 		}
 		tick() { // implement
 		}
+		make() {  // implement
+			console.warn('obj.make');
+		}
 		update() {
-			this.pose();
+			this.wrpose();
 			this.bound();
 			this.drawable?.update();
-		}
-		done() { // implement
-			this.pose();
-			this.bound();
 		}
 		aabb: aabb2 | undefined;
 		bound() {

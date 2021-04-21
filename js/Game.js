@@ -1,305 +1,108 @@
-import { Mesh, PlaneBufferGeometry, MeshBasicMaterial, Group } from "three";
-import aabb2 from "./Aabb2";
+import App from "./App";
 import pts from "./Pts";
 import Renderer from "./Renderer";
-class Countable {
-    constructor() {
-        this.active = false;
+import Core from "./Core";
+import Objects from "./Objects";
+import Hooks from "./Hooks";
+var Game;
+(function (Game) {
+    let globals;
+    (function (globals) {
+    })(globals = Game.globals || (Game.globals = {}));
+    function start() {
+        globals.wrld = Game.World.make();
+        globals.galaxy = new Core.Galaxy(10);
+        Hooks.start();
     }
-    isActive() { return this.active; }
-    ;
-    on() {
-        if (this.active)
-            return true;
-        this.active = true;
-    }
-    off() {
-        if (!this.active)
-            return true;
-        this.active = false;
-    }
-}
-Countable.Num = 0;
-Countable.Active = 0;
-;
-var Core;
-(function (Core) {
-    class Galaxy {
-        constructor(span) {
-            this.arrays = [];
-            this.center = new Center(this);
+    Game.start = start;
+    class World {
+        constructor() {
+            //objs: Game.Obj[] = [];
+            this.view = [0, 0];
+            this.pos = [0, 0];
+            this.wpos = [0, 0];
+            this.mpos = [0, 0];
         }
-        update(wpos) {
-            // lay out sectors in a grid
-            this.center.big = Galaxy.big(wpos);
-            this.center.offs();
-            this.center.crawl();
+        static make() {
+            return new World;
         }
-        atnullable(x, y) {
-            if (this.arrays[y] == undefined)
-                this.arrays[y] = [];
-            return this.arrays[y][x];
-        }
-        at(x, y) {
-            return this.atnullable(x, y) || this.make(x, y);
-        }
-        atw(wpos) {
-            let ig = Galaxy.big(wpos);
-            return this.at(ig[0], ig[1]);
-        }
-        make(x, y) {
-            let s = this.atnullable(x, y);
-            if (s)
-                return s;
-            s = this.arrays[y][x] = new Sector(x, y, this);
-            return s;
-        }
-        static big(wpos) {
-            return pts.floor(pts.divide(wpos, Galaxy.SectorSpan));
-        }
-        static unproject(pixel) {
-            return pts.divide(pixel, Core.Galaxy.Unit);
-        }
-    }
-    Galaxy.Unit = 50;
-    Galaxy.SectorSpan = 10;
-    Core.Galaxy = Galaxy;
-    ;
-    class Sector extends Countable {
-        constructor(x, y, galaxy) {
-            var _a;
-            super();
-            this.span = 2000;
-            this.objs = [];
-            Sector.Num++;
-            this.big = [x, y];
-            this.group = new Group;
-            (_a = Sector.hooks) === null || _a === void 0 ? void 0 : _a.onCreate();
+        chart(big) {
         }
         add(obj) {
-            let i = this.objs.indexOf(obj);
-            if (i == -1) {
-                this.objs.push(obj);
-                obj.sector = this;
-                if (this.isActive())
-                    obj.show();
-            }
+            let sector = globals.galaxy.atw(obj.wpos);
+            sector.add(obj);
         }
         remove(obj) {
-            let i = this.objs.indexOf(obj);
-            if (i > -1) {
-                obj.sector = undefined;
-                return !!this.objs.splice(i, 1).length;
-            }
+            var _a;
+            (_a = obj.sector) === null || _a === void 0 ? void 0 : _a.remove(obj);
         }
         tick() {
-            for (let obj of this.objs)
-                obj.tick();
+            this.move();
+            this.mouse();
+            this.stats();
+            let pos = Core.Galaxy.unproject(this.view);
+            globals.galaxy.update(pos);
         }
-        show() {
-            if (this.on())
-                return;
-            Sector.Active++;
-            for (let obj of this.objs)
-                obj.show();
-            Renderer.scene.add(this.group);
-        }
-        hide() {
-            if (this.off())
-                return;
-            Sector.Active--;
-            for (let obj of this.objs)
-                obj.hide();
-            Renderer.scene.remove(this.group);
-        }
-        objs_() { return this.objs; }
-    }
-    Core.Sector = Sector;
-    class Center {
-        constructor(galaxy) {
-            this.galaxy = galaxy;
-            this.big = [0, 0];
-            this.shown = [];
-        }
-        crawl() {
-            const spread = 3; // this is * 2
-            for (let y = -spread; y < spread; y++) {
-                for (let x = -spread; x < spread; x++) {
-                    let pos = pts.add(this.big, [x, y]);
-                    let s = this.galaxy.atnullable(pos[0], pos[1]);
-                    if (!s)
-                        continue;
-                    if (!s.isActive()) {
-                        this.shown.push(s);
-                        console.log(' show ! ');
-                        s.show();
-                    }
-                }
+        mouse() {
+            let mouse = App.mouse();
+            mouse = pts.subtract(mouse, pts.divide([Renderer.w, Renderer.h], 2));
+            mouse = pts.mult(mouse, Renderer.ndpi);
+            mouse[1] = -mouse[1];
+            this.mpos = pts.add(this.view, mouse);
+            if (App.button(0) == 1) {
+                console.log('clicked the view');
+                let rock = new Objects.Rock;
+                rock.wpos = pts.divide(this.mpos, Core.Galaxy.Unit); // Galaxy.unproject
+                rock.make();
+                this.add(rock);
             }
         }
-        offs() {
-            const outside = 4;
-            let i = this.shown.length;
-            while (i--) {
-                let s;
-                s = this.shown[i];
-                s.tick();
-                if (pts.dist(s.big, this.big) > outside) {
-                    console.log(' hide !');
-                    s.hide();
-                    this.shown.splice(i, 1);
-                }
-            }
+        move() {
+            let pan = 5;
+            if (App.key('x'))
+                pan *= 10;
+            if (App.key('w'))
+                this.view[1] += pan;
+            if (App.key('s'))
+                this.view[1] -= pan;
+            if (App.key('a'))
+                this.view[0] -= pan;
+            if (App.key('d'))
+                this.view[0] += pan;
+            let inv = pts.inv(this.view);
+            Renderer.scene.position.set(inv[0], inv[1], 0);
+        }
+        stats() {
+            let crunch = ``;
+            crunch += `DPI_UPSCALED_RT: ${Renderer.DPI_UPSCALED_RT}<br />`;
+            crunch += `fps: ${Renderer.fps}<br />`;
+            crunch += `memory: ${Renderer.memory}<br />`;
+            crunch += `(n)dpi: ${Renderer.ndpi}<br />`;
+            crunch += `mouse: ${pts.to_string(App.mouse())}<br /><br />`;
+            crunch += `world view: ${pts.to_string(this.view)}<br />`;
+            crunch += `world pos: ${pts.to_string(this.pos)}<br /><br />`;
+            crunch += `sectors: ${Core.Sector.Active} / ${Core.Sector.Num}<br />`;
+            crunch += `game objs: ${Core.Obj.Active} / ${Core.Obj.Num}<br />`;
+            crunch += `drawables: ${Core.Drawable.Active} / ${Core.Drawable.Num}<br />`;
+            App.sethtml('.stats', crunch);
+        }
+        start() {
+            globals.ply = Objects.Ply.make();
+            this.add(globals.ply);
         }
     }
-    Core.Center = Center;
-    class Obj extends Countable {
-        constructor() {
-            super();
-            this.wpos = [0, 0];
-            this.rpos = [0, 0];
-            this.size = [100, 100];
-            this.rz = 0;
-            Obj.Num++;
+    Game.World = World;
+    let Util;
+    (function (Util) {
+        function Galx_towpos(s, wpos) {
         }
-        delete() {
-            this.hide();
-            Obj.Num--;
+        Util.Galx_towpos = Galx_towpos;
+        function Sector_getobjat(s, wpos) {
+            for (let obj of s.objs_())
+                if (pts.equals(obj.wpos, wpos))
+                    return obj;
         }
-        show() {
-            var _a;
-            if (this.on())
-                return;
-            Obj.Active++;
-            (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.show();
-        }
-        hide() {
-            var _a;
-            if (this.off())
-                return;
-            Obj.Active--;
-            (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.hide();
-        }
-        pose() {
-            this.rpos = pts.mult(this.wpos, Galaxy.Unit);
-        }
-        tick() {
-        }
-        update() {
-            var _a;
-            this.pose();
-            this.bound();
-            (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.update();
-        }
-        done() {
-            this.pose();
-            this.bound();
-        }
-        bound() {
-            let div = pts.divide(this.size, 2);
-            this.aabb = new aabb2(pts.inv(div), div);
-            this.aabb.translate(this.rpos);
-        }
-        moused(mouse) {
-            var _a;
-            if ((_a = this.aabb) === null || _a === void 0 ? void 0 : _a.test(new aabb2(mouse, mouse)))
-                return true;
-        }
-    }
-    Core.Obj = Obj;
-    class Drawable extends Countable {
-        constructor(obj) {
-            super();
-            this.obj = obj;
-            Drawable.Num++;
-        }
-        done() {
-            // leave empty
-        }
-        update() {
-            var _a;
-            (_a = this.shape) === null || _a === void 0 ? void 0 : _a.update();
-        }
-        delete() {
-            this.hide();
-            Drawable.Num--;
-        }
-        show() {
-            var _a;
-            if (this.on())
-                return;
-            Drawable.Active++;
-            (_a = this.shape) === null || _a === void 0 ? void 0 : _a.setup();
-        }
-        hide() {
-            var _a;
-            if (this.off())
-                return;
-            Drawable.Active--;
-            (_a = this.shape) === null || _a === void 0 ? void 0 : _a.dispose();
-        }
-    }
-    Core.Drawable = Drawable;
-    class Shape {
-        constructor(drawable) {
-            this.drawable = drawable;
-        }
-        done() {
-            // implement
-        }
-        update() {
-            // implement
-        }
-        setup() {
-            // implement
-        }
-        dispose() {
-            // implement
-        }
-    }
-    Core.Shape = Shape;
-    class Quad extends Shape {
-        constructor(drawable) {
-            super(drawable);
-            this.img = 'forgot to set';
-        }
-        done() {
-        }
-        update() {
-            var _a, _b;
-            if (!this.mesh)
-                return;
-            this.mesh.rotation.z = this.drawable.obj.rz;
-            (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...this.drawable.obj.rpos, 0]);
-            (_b = this.mesh) === null || _b === void 0 ? void 0 : _b.updateMatrix();
-        }
-        dispose() {
-            var _a, _b, _c;
-            if (!this.mesh)
-                return;
-            (_a = this.geometry) === null || _a === void 0 ? void 0 : _a.dispose();
-            (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
-            (_c = this.mesh.parent) === null || _c === void 0 ? void 0 : _c.remove(this.mesh);
-        }
-        setup() {
-            let w = this.drawable.obj.size[0];
-            let h = this.drawable.obj.size[1];
-            this.geometry = new PlaneBufferGeometry(w, h, 2, 2);
-            let map = Renderer.loadtexture(`img/${this.img}.png`);
-            this.material = new MeshBasicMaterial({
-                map: map,
-                transparent: true,
-            });
-            this.mesh = new Mesh(this.geometry, this.material);
-            this.mesh.frustumCulled = false;
-            this.mesh.matrixAutoUpdate = false;
-            this.update();
-            if (this.drawable.obj.sector)
-                this.drawable.obj.sector.group.add(this.mesh);
-            else
-                Renderer.scene.add(this.mesh);
-        }
-    }
-    Core.Quad = Quad;
-})(Core || (Core = {}));
-export default Core;
+        Util.Sector_getobjat = Sector_getobjat;
+    })(Util = Game.Util || (Game.Util = {}));
+})(Game || (Game = {}));
+export default Game;

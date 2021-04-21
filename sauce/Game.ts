@@ -6,17 +6,17 @@ import pts from "./Pts";
 import Renderer from "./Renderer";
 
 import Core from "./Core";
-import Game3 from "./Game3";
+import Objects from "./Objects";
 import Hooks from "./Hooks";
 
-namespace Game2 {
+namespace Game {
 	export namespace globals {
-		export var wlrd: World;
-		export var ply: Ply;
+		export var wrld: World;
+		export var ply: Objects.Ply;
 		export var galaxy: Core.Galaxy;
 	}
 	export function start() {
-		globals.wlrd = Game2.World.make();
+		globals.wrld = Game.World.make();
 		globals.galaxy = new Core.Galaxy(10);
 		Hooks.start();
 	}
@@ -34,13 +34,13 @@ namespace Game2 {
 		constructor() {
 		}
 		add(obj: Core.Obj) {
-			let s = globals.galaxy.atw(obj.wpos);
-			s.add(obj);
+			let sector = globals.galaxy.atw(obj.wpos);
+			sector.add(obj);
 		}
 		remove(obj: Core.Obj) {
 			obj.sector?.remove(obj);
 		}
-		update() {
+		tick() {
 			this.move();
 			this.mouse();
 			this.stats();
@@ -55,9 +55,9 @@ namespace Game2 {
 			this.mpos = pts.add(this.view, mouse);
 			if (App.button(0) == 1) {
 				console.log('clicked the view');
-				let rock = new Game3.Rock;
+				let rock = new Objects.Rock;
 				rock.wpos = pts.divide(this.mpos, Core.Galaxy.Unit); // Galaxy.unproject
-				rock.done();
+				rock.make();
 				this.add(rock);
 			}
 		}
@@ -86,31 +86,11 @@ namespace Game2 {
 			App.sethtml('.stats', crunch);
 		}
 		start() {
-			globals.ply = Ply.make();
+			globals.ply = Objects.Ply.make();
 			this.add(globals.ply);
 		}
 	}
-	export class Ply extends Core.Obj {
-		static make() {
-			let ply = new Ply;
-			ply.done();
-			return ply;
-		}
-		constructor() {
-			super();
-		}
-		done() {
-			let drawable = new Core.Drawable({ obj: this });
-			let shape = new Core.Rectangle({
-				drawable: drawable,
-				img: 'redfighter0005'
-			});
-			super.done();
-		}
-		tick() {
-			super.update();
-		}
-	}
+	
 	export namespace Util {
 		export function Galx_towpos(s: Core.Sector, wpos: Vec2) {
 		}
@@ -123,4 +103,4 @@ namespace Game2 {
 	}
 }
 
-export default Game2;
+export default Game;

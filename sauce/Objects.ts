@@ -6,35 +6,53 @@ import pts from "./Pts";
 import Renderer from "./Renderer";
 import Core from "./Core";
 
-namespace Game3 {
+namespace Objects {
 	export namespace globals {
 		export var ping: Ping;
 	}
-	export class Ping extends Core.Obj {
+	export class Ply extends Core.Obj {
+		static make() {
+			let ply = new Ply;
+			ply.make();
+			return ply;
+		}
 		constructor() {
 			super();
 		}
-		done() {
+		make() {
 			let drawable = new Core.Drawable({ obj: this });
 			let shape = new Core.Rectangle({
 				drawable: drawable,
 				img: 'redfighter0005'
 			});
-			super.done();
+		}
+		tick() {
+			super.update();
+		}
+	}
+	export class Ping extends Core.Obj {
+		constructor() {
+			super();
+		}
+		make() {
+			let drawable = new Core.Drawable({ obj: this });
+			let shape = new Core.Rectangle({
+				drawable: drawable,
+				img: 'redfighter0005'
+			});
 		}
 	}
 	export class Rock extends Core.Obj {
 		constructor() {
 			super();
 		}
-		done() {
+		make() {
 			this.size = [200, 200];
 			let drawable = new Core.Drawable({ obj: this });
 			let shape = new Core.Rectangle({
 				drawable: drawable,
 				img: 'pngwing.com'
 			});
-			super.done();
 		}
 		tick() {
 			this.rz += 0.002;
@@ -43,4 +61,4 @@ namespace Game3 {
 	}
 }
 
-export default Game3;
+export default Objects;

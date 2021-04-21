@@ -66,7 +66,7 @@ var App;
     function loop(timestamp) {
         requestAnimationFrame(loop);
         Renderer.update();
-        Grav.update();
+        Grav.tick();
         Renderer.render();
         App.wheel = 0;
         for (let b of [0, 1])

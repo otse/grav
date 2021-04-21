@@ -1,5 +1,5 @@
 import Core from "./Core";
-import Game2 from "./Game2";
+import Game from "./Game";
 
 import TestingChamber from "./TestingChamber";
 
@@ -56,7 +56,7 @@ export namespace Grav {
 	}
 	export function init() {
 		console.log('grav init');
-		Game2.start();
+		Game.start();
 		time = new Date().getTime();
 		resourced('RC_UNDEFINED');
 		resourced('POPULAR_ASSETS');
@@ -67,7 +67,7 @@ export namespace Grav {
 		if (started)
 			return;
 		console.log('grav starting');
-		Game2.globals.wlrd.start();
+		Game.globals.wrld.start();
 		if (window.location.href.indexOf("#testingchamber") != -1)
 			TestingChamber.start();
 		if (window.location.href.indexOf("#novar") != -1)
@@ -76,12 +76,12 @@ export namespace Grav {
 		started = true;
 	}
 
-	export function update() {
+	export function tick() {
 		if (!started) {
 			reasonable_waiter();
 			return;
 		}
-		Game2.globals.wlrd.update();
+		Game.globals.wrld.tick();
 		//Board.update();
 		//Ploppables.update();
 	}

@@ -1,41 +1,60 @@
 import Core from "./Core";
-var Game3;
-(function (Game3) {
+var Objects;
+(function (Objects) {
     let globals;
     (function (globals) {
-    })(globals = Game3.globals || (Game3.globals = {}));
-    class Ping extends Core.Obj {
+    })(globals = Objects.globals || (Objects.globals = {}));
+    class Ply extends Core.Obj {
+        static make() {
+            let ply = new Ply;
+            ply.make();
+            return ply;
+        }
         constructor() {
             super();
         }
-        done() {
+        make() {
             let drawable = new Core.Drawable({ obj: this });
             let shape = new Core.Rectangle({
                 drawable: drawable,
                 img: 'redfighter0005'
             });
-            super.done();
+        }
+        tick() {
+            super.update();
         }
     }
-    Game3.Ping = Ping;
+    Objects.Ply = Ply;
+    class Ping extends Core.Obj {
+        constructor() {
+            super();
+        }
+        make() {
+            let drawable = new Core.Drawable({ obj: this });
+            let shape = new Core.Rectangle({
+                drawable: drawable,
+                img: 'redfighter0005'
+            });
+        }
+    }
+    Objects.Ping = Ping;
     class Rock extends Core.Obj {
         constructor() {
             super();
         }
-        done() {
+        make() {
             this.size = [200, 200];
             let drawable = new Core.Drawable({ obj: this });
             let shape = new Core.Rectangle({
                 drawable: drawable,
                 img: 'pngwing.com'
             });
-            super.done();
         }
         tick() {
             this.rz += 0.002;
             super.update();
         }
     }
-    Game3.Rock = Rock;
-})(Game3 || (Game3 = {}));
-export default Game3;
+    Objects.Rock = Rock;
+})(Objects || (Objects = {}));
+export default Objects;

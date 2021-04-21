@@ -1,6 +1,6 @@
 import Core from "./Core";
-import Game2 from "./Game2";
-import Game3 from "./Game3";
+import Game from "./Game";
+import Objects from "./Objects";
 
 // high level game happenings
 

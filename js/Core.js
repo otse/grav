@@ -126,13 +126,13 @@ var Core;
             for (let y = -spread; y < spread; y++) {
                 for (let x = -spread; x < spread; x++) {
                     let pos = pts.add(this.big, [x, y]);
-                    let s = this.galaxy.atnullable(pos[0], pos[1]);
-                    if (!s)
+                    let sector = this.galaxy.atnullable(pos[0], pos[1]);
+                    if (!sector)
                         continue;
-                    if (!s.isActive()) {
-                        this.shown.push(s);
+                    if (!sector.isActive()) {
+                        this.shown.push(sector);
                         console.log(' show ! ');
-                        s.show();
+                        sector.show();
                     }
                 }
             }
@@ -141,12 +141,12 @@ var Core;
             const outside = 4;
             let i = this.shown.length;
             while (i--) {
-                let s;
-                s = this.shown[i];
-                s.tick();
-                if (pts.dist(s.big, this.big) > outside) {
+                let sector;
+                sector = this.shown[i];
+                sector.tick();
+                if (pts.dist(sector.big, this.big) > outside) {
                     console.log(' hide !');
-                    s.hide();
+                    sector.hide();
                     this.shown.splice(i, 1);
                 }
             }
@@ -171,6 +171,7 @@ var Core;
             if (this.on())
                 return;
             Obj.Active++;
+            this.update();
             (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.show();
         }
         hide() {
@@ -180,20 +181,19 @@ var Core;
             Obj.Active--;
             (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.hide();
         }
-        pose() {
+        wrpose() {
             this.rpos = pts.mult(this.wpos, Galaxy.Unit);
         }
         tick() {
         }
+        make() {
+            console.warn('obj.make');
+        }
         update() {
             var _a;
-            this.pose();
+            this.wrpose();
             this.bound();
             (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.update();
-        }
-        done() {
-            this.pose();
-            this.bound();
         }
         bound() {
             let div = pts.divide(this.size, 2);

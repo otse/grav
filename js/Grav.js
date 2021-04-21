@@ -1,4 +1,4 @@
-import Game2 from "./Game2";
+import Game from "./Game";
 import TestingChamber from "./TestingChamber";
 export var Grav;
 (function (Grav) {
@@ -56,7 +56,7 @@ export var Grav;
     Grav.critical = critical;
     function init() {
         console.log('grav init');
-        Game2.start();
+        Game.start();
         time = new Date().getTime();
         resourced('RC_UNDEFINED');
         resourced('POPULAR_ASSETS');
@@ -68,7 +68,7 @@ export var Grav;
         if (started)
             return;
         console.log('grav starting');
-        Game2.globals.wlrd.start();
+        Game.globals.wrld.start();
         if (window.location.href.indexOf("#testingchamber") != -1)
             TestingChamber.start();
         if (window.location.href.indexOf("#novar") != -1)
@@ -76,15 +76,15 @@ export var Grav;
         //setTimeout(() => Board.messageslide('', 'You get one cheap set of shoes, and a well-kept shovel.'), 1000);
         started = true;
     }
-    function update() {
+    function tick() {
         if (!started) {
             reasonable_waiter();
             return;
         }
-        Game2.globals.wlrd.update();
+        Game.globals.wrld.tick();
         //Board.update();
         //Ploppables.update();
     }
-    Grav.update = update;
+    Grav.tick = tick;
 })(Grav || (Grav = {}));
 export default Grav;
