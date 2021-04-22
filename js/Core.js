@@ -69,7 +69,6 @@ var Core;
         constructor(x, y, galaxy) {
             var _a;
             super();
-            this.span = 2000;
             this.objs = [];
             Sector.Num++;
             this.big = [x, y];
@@ -227,7 +226,7 @@ var Core;
             if (this.on())
                 return;
             Drawable.Active++;
-            (_a = this.shape) === null || _a === void 0 ? void 0 : _a.setup();
+            (_a = this.shape) === null || _a === void 0 ? void 0 : _a.create();
         }
         hide() {
             var _a;
@@ -256,7 +255,7 @@ var Core;
         update() {
             // implement
         }
-        setup() {
+        create() {
             // implement
         }
         dispose() {
@@ -269,7 +268,7 @@ var Core;
         constructor(y) {
             super(y);
             this.y = y;
-            this.setup();
+            //this.setup();
         }
         update() {
             var _a, _b;
@@ -287,7 +286,7 @@ var Core;
             (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
             (_c = this.mesh.parent) === null || _c === void 0 ? void 0 : _c.remove(this.mesh);
         }
-        setup() {
+        create() {
             let w = this.y.drawable.x.obj.size[0];
             let h = this.y.drawable.x.obj.size[1];
             this.geometry = new PlaneBufferGeometry(w, h, 2, 2);

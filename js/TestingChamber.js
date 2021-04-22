@@ -27,20 +27,20 @@ var TestingChamber;
         make() {
             this.size = [100, 100];
             let drawable = new Core.Drawable({ obj: this });
-            let quad = new Core.Rectangle({
+            let shape = new Core.Rectangle({
                 drawable: drawable,
                 img: 'test100'
             });
+            this.shape = shape;
         }
         tick() {
             //super.update();
-            return;
-            if (this.moused(Game.globals.wrld.mpos)) {
-                console.log('hover testing square');
-                this.quad.material.color.set('red');
+            //return;
+            if (this.moused(Game.globals.wrld.mrpos)) {
+                this.shape.material.color.set('green');
             }
             else {
-                this.quad.material.color.set('white');
+                this.shape.material.color.set('white');
                 //console.log('boo boo meadow');
             }
         }

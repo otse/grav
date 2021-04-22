@@ -25,7 +25,7 @@ namespace Game {
 		view: Vec2 = [0, 0];
 		pos: Vec2 = [0, 0];
 		wpos: Vec2 = [0, 0];
-		mpos: Vec2 = [0, 0];
+		mrpos: Vec2 = [0, 0];
 		static make() {
 			return new World;
 		}
@@ -52,11 +52,12 @@ namespace Game {
 			mouse = pts.subtract(mouse, pts.divide([Renderer.w, Renderer.h], 2))
 			mouse = pts.mult(mouse, Renderer.ndpi);
 			mouse[1] = -mouse[1];
-			this.mpos = pts.add(this.view, mouse);
+			this.mrpos = pts.add(this.view, mouse);
 			if (App.button(0) == 1) {
 				console.log('clicked the view');
 				let rock = new Objects.Rock;
-				rock.wpos = pts.divide(this.mpos, Core.Galaxy.Unit); // Galaxy.unproject
+				// pts.divide(this.mpos, Core.Galaxy.Unit); // Galaxy.unproject
+				rock.wpos = Core.Galaxy.unproject(this.mrpos);
 				rock.make();
 				this.add(rock);
 			}
@@ -69,6 +70,7 @@ namespace Game {
 			if (App.key('a')) this.view[0] -= pan;
 			if (App.key('d')) this.view[0] += pan;
 			let inv = pts.inv(this.view);
+			this.pos = Core.Galaxy.unproject(this.view);
 			Renderer.scene.position.set(inv[0], inv[1], 0);
 		}
 		stats() {
@@ -77,16 +79,16 @@ namespace Game {
 			crunch += `fps: ${Renderer.fps}<br />`;
 			crunch += `memory: ${Renderer.memory}<br />`;
 			crunch += `(n)dpi: ${Renderer.ndpi}<br />`;
-			crunch += `mouse: ${pts.to_string(App.mouse())}<br /><br />`;
-			crunch += `world view: ${pts.to_string(this.view)}<br />`;
-			crunch += `world pos: ${pts.to_string(this.pos)}<br /><br />`;
+			crunch += `mouse pos: ${pts.to_string(App.mouse())}<br /><br />`;
+			crunch += `world pos: ${pts.to_string(this.view)}<br />`;
+			//crunch += `world wpos: ${pts.to_string(this.pos)}<br /><br />`;
 			crunch += `sectors: ${Core.Sector.Active} / ${Core.Sector.Num}<br />`;
 			crunch += `game objs: ${Core.Obj.Active} / ${Core.Obj.Num}<br />`;
 			crunch += `drawables: ${Core.Drawable.Active} / ${Core.Drawable.Num}<br />`;
 			App.sethtml('.stats', crunch);
 		}
 		start() {
-			globals.ply = Objects.Ply.make();
+			globals.ply = Objects.Ply.instance();
 			this.add(globals.ply);
 		}
 	}

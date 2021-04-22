@@ -5,7 +5,7 @@ var Objects;
     (function (globals) {
     })(globals = Objects.globals || (Objects.globals = {}));
     class Ply extends Core.Obj {
-        static make() {
+        static instance() {
             let ply = new Ply;
             ply.make();
             return ply;

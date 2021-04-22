@@ -339,7 +339,6 @@ void main() {
             constructor(x, y, galaxy) {
                 var _a;
                 super();
-                this.span = 2000;
                 this.objs = [];
                 Sector.Num++;
                 this.big = [x, y];
@@ -497,7 +496,7 @@ void main() {
                 if (this.on())
                     return;
                 Drawable.Active++;
-                (_a = this.shape) === null || _a === void 0 ? void 0 : _a.setup();
+                (_a = this.shape) === null || _a === void 0 ? void 0 : _a.create();
             }
             hide() {
                 var _a;
@@ -525,7 +524,7 @@ void main() {
             update() {
                 // implement
             }
-            setup() {
+            create() {
                 // implement
             }
             dispose() {
@@ -537,7 +536,7 @@ void main() {
             constructor(y) {
                 super(y);
                 this.y = y;
-                this.setup();
+                //this.setup();
             }
             update() {
                 var _a, _b;
@@ -555,7 +554,7 @@ void main() {
                 (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
                 (_c = this.mesh.parent) === null || _c === void 0 ? void 0 : _c.remove(this.mesh);
             }
-            setup() {
+            create() {
                 let w = this.y.drawable.x.obj.size[0];
                 let h = this.y.drawable.x.obj.size[1];
                 this.geometry = new THREE.PlaneBufferGeometry(w, h, 2, 2);
@@ -584,7 +583,7 @@ void main() {
         (function (globals) {
         })(globals = Objects.globals || (Objects.globals = {}));
         class Ply extends Core$1.Obj {
-            static make() {
+            static instance() {
                 let ply = new Ply;
                 ply.make();
                 return ply;
@@ -671,7 +670,7 @@ void main() {
                 this.view = [0, 0];
                 this.pos = [0, 0];
                 this.wpos = [0, 0];
-                this.mpos = [0, 0];
+                this.mrpos = [0, 0];
             }
             static make() {
                 return new World;
@@ -698,11 +697,12 @@ void main() {
                 mouse = pts.subtract(mouse, pts.divide([Renderer$1.w, Renderer$1.h], 2));
                 mouse = pts.mult(mouse, Renderer$1.ndpi);
                 mouse[1] = -mouse[1];
-                this.mpos = pts.add(this.view, mouse);
+                this.mrpos = pts.add(this.view, mouse);
                 if (App$1.button(0) == 1) {
                     console.log('clicked the view');
                     let rock = new Objects$1.Rock;
-                    rock.wpos = pts.divide(this.mpos, Core$1.Galaxy.Unit); // Galaxy.unproject
+                    // pts.divide(this.mpos, Core.Galaxy.Unit); // Galaxy.unproject
+                    rock.wpos = Core$1.Galaxy.unproject(this.mrpos);
                     rock.make();
                     this.add(rock);
                 }
@@ -720,6 +720,7 @@ void main() {
                 if (App$1.key('d'))
                     this.view[0] += pan;
                 let inv = pts.inv(this.view);
+                this.pos = Core$1.Galaxy.unproject(this.view);
                 Renderer$1.scene.position.set(inv[0], inv[1], 0);
             }
             stats() {
@@ -728,16 +729,16 @@ void main() {
                 crunch += `fps: ${Renderer$1.fps}<br />`;
                 crunch += `memory: ${Renderer$1.memory}<br />`;
                 crunch += `(n)dpi: ${Renderer$1.ndpi}<br />`;
-                crunch += `mouse: ${pts.to_string(App$1.mouse())}<br /><br />`;
-                crunch += `world view: ${pts.to_string(this.view)}<br />`;
-                crunch += `world pos: ${pts.to_string(this.pos)}<br /><br />`;
+                crunch += `mouse pos: ${pts.to_string(App$1.mouse())}<br /><br />`;
+                crunch += `world pos: ${pts.to_string(this.view)}<br />`;
+                //crunch += `world wpos: ${pts.to_string(this.pos)}<br /><br />`;
                 crunch += `sectors: ${Core$1.Sector.Active} / ${Core$1.Sector.Num}<br />`;
                 crunch += `game objs: ${Core$1.Obj.Active} / ${Core$1.Obj.Num}<br />`;
                 crunch += `drawables: ${Core$1.Drawable.Active} / ${Core$1.Drawable.Num}<br />`;
                 App$1.sethtml('.stats', crunch);
             }
             start() {
-                globals.ply = Objects$1.Ply.make();
+                globals.ply = Objects$1.Ply.instance();
                 this.add(globals.ply);
             }
         }
@@ -784,14 +785,22 @@ void main() {
             make() {
                 this.size = [100, 100];
                 let drawable = new Core$1.Drawable({ obj: this });
-                let quad = new Core$1.Rectangle({
+                let shape = new Core$1.Rectangle({
                     drawable: drawable,
                     img: 'test100'
                 });
+                this.shape = shape;
             }
             tick() {
                 //super.update();
-                return;
+                //return;
+                if (this.moused(Game$1.globals.wrld.mrpos)) {
+                    this.shape.material.color.set('green');
+                }
+                else {
+                    this.shape.material.color.set('white');
+                    //console.log('boo boo meadow');
+                }
             }
         }
         TestingChamber.TestingSquare = TestingSquare;

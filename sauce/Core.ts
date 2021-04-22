@@ -69,7 +69,7 @@ namespace Core {
 	export class Sector extends Countable {
 		static hooks?: SectorHooks | undefined;
 		group: Group;
-		readonly span = 2000;
+		//readonly span = 2000;
 		readonly big: Vec2;
 		private readonly objs: Obj[] = [];
 		constructor(x, y, galaxy) {
@@ -224,7 +224,7 @@ namespace Core {
 			if (this.on())
 				return;
 			Drawable.Active++;
-			this.shape?.setup();
+			this.shape?.create();
 		}
 		hide() {
 			if (this.off())
@@ -250,7 +250,7 @@ namespace Core {
 		update() {
 			// implement
 		}
-		setup() {
+		create() {
 			// implement
 		}
 		dispose() {
@@ -258,16 +258,16 @@ namespace Core {
 		}
 	}
 	export namespace Shape {
-		export type X = Shape['x'];
+		export type Parameters = Shape['x'];
 	};
 	export class Rectangle extends Shape {
 		mesh: Mesh | undefined;
 		material: MeshBasicMaterial;
 		geometry: PlaneBufferGeometry;
 
-		constructor(public readonly y: { img: string } & Shape.X) {
+		constructor(public readonly y: { img: string } & Shape.Parameters) {
 			super(y);
-			this.setup();
+			//this.setup();
 		}
 		update() {
 			if (!this.mesh)
@@ -283,7 +283,7 @@ namespace Core {
 			this.material?.dispose();
 			this.mesh.parent?.remove(this.mesh);
 		}
-		setup() {
+		create() {
 			let w = this.y.drawable.x.obj.size[0];
 			let h = this.y.drawable.x.obj.size[1];
 			this.geometry = new PlaneBufferGeometry(w, h, 2, 2);
