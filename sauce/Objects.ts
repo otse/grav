@@ -68,7 +68,7 @@ namespace Objects {
 			this.wpos[1] -= this.float[1];
 			this.rz += this.rate;
 			super.update();
-			this.sector?.transfer(this);
+			this.sector?.swap(this);
 		}
 	}
 }

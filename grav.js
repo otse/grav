@@ -275,36 +275,48 @@ void main() {
     aabb2.TEST = TEST;
 
     class Countable {
-        constructor() {
+        constructor(type) {
+            this.type = type;
             this.active = false;
+            if (!Countable.Get(type))
+                Countable.Types[type] = { Num: 1, Active: 0 };
+            else
+                Countable.Get(type).Num++;
+        }
+        static Get(type) {
+            return Countable.Types[type];
         }
         isActive() { return this.active; }
         ;
         on() {
             if (this.active)
                 return true;
+            Countable.Get(this.type).Active++;
             this.active = true;
         }
         off() {
             if (!this.active)
                 return true;
+            Countable.Get(this.type).Active--;
             this.active = false;
         }
+        uncount() {
+            Countable.Get(this.type).Num--;
+        }
     }
-    Countable.Num = 0;
-    Countable.Active = 0;
+    Countable.Types = {};
     var Core;
     (function (Core) {
         class Galaxy {
             constructor(span) {
                 this.arrays = [];
-                this.center = new Center(this);
+                this.grid = new Grid(3, 4, this);
             }
             update(wpos) {
                 // lay out sectors in a grid
-                this.center.big = Galaxy.big(wpos);
-                this.center.offs();
-                this.center.crawl();
+                this.grid.big = Galaxy.big(wpos);
+                this.grid.offs();
+                this.grid.crawl();
             }
             atnullable(x, y) {
                 if (this.arrays[y] == undefined)
@@ -338,12 +350,11 @@ void main() {
         class Sector extends Countable {
             constructor(x, y, galaxy) {
                 var _a;
-                super();
+                super('Sector');
                 this.x = x;
                 this.y = y;
                 this.galaxy = galaxy;
                 this.objs = [];
-                Sector.Num++;
                 this.big = [x, y];
                 this.group = new THREE.Group;
                 (_a = Sector.hooks) === null || _a === void 0 ? void 0 : _a.onCreate();
@@ -364,13 +375,16 @@ void main() {
                     return !!this.objs.splice(i, 1).length;
                 }
             }
-            transfer(obj) {
+            swap(obj) {
                 var _a;
                 let sector = this.galaxy.atwpos(obj.wpos);
                 if (obj.sector != sector) {
                     // console.warn('obj sector not sector');
                     (_a = obj.sector) === null || _a === void 0 ? void 0 : _a.remove(obj);
                     sector.add(obj);
+                    if (!this.galaxy.grid.visible(sector)) {
+                        obj.hide();
+                    }
                 }
             }
             tick() {
@@ -380,7 +394,6 @@ void main() {
             show() {
                 if (this.on())
                     return;
-                Sector.Active++;
                 Util.SectorShow(this);
                 //console.log(' sector show ');
                 for (let obj of this.objs)
@@ -390,7 +403,6 @@ void main() {
             hide() {
                 if (this.off())
                     return;
-                Sector.Active--;
                 Util.SectorHide(this);
                 //console.log(' sector hide ');
                 for (let obj of this.objs)
@@ -400,22 +412,27 @@ void main() {
             objs_() { return this.objs; }
         }
         Core.Sector = Sector;
-        class Center {
-            constructor(galaxy) {
+        class Grid {
+            constructor(spread, outside, galaxy) {
+                this.spread = spread;
+                this.outside = outside;
                 this.galaxy = galaxy;
                 this.big = [0, 0];
                 this.shown = [];
             }
+            visible(sector) {
+                return pts.dist(sector.big, this.big) < this.spread;
+            }
             crawl() {
-                const spread = 3; // this is * 2
-                for (let y = -spread; y < spread; y++) {
-                    for (let x = -spread; x < spread; x++) {
+                for (let y = -this.spread; y < this.spread; y++) {
+                    for (let x = -this.spread; x < this.spread; x++) {
                         let pos = pts.add(this.big, [x, y]);
                         let sector = this.galaxy.atnullable(pos[0], pos[1]);
                         if (!sector)
                             continue;
                         if (!sector.isActive()) {
                             this.shown.push(sector);
+                            //console.log('vis test for minted sec ' + this.vis(sector));
                             //console.log(' cull show sector ! ');
                             sector.show();
                         }
@@ -423,13 +440,12 @@ void main() {
                 }
             }
             offs() {
-                const outside = 4;
                 let i = this.shown.length;
                 while (i--) {
                     let sector;
                     sector = this.shown[i];
                     sector.tick();
-                    if (pts.dist(sector.big, this.big) > outside) {
+                    if (pts.dist(sector.big, this.big) > this.outside) {
                         //console.log(' cull hide sector !');
                         sector.hide();
                         this.shown.splice(i, 1);
@@ -437,26 +453,24 @@ void main() {
                 }
             }
         }
-        Core.Center = Center;
+        Core.Grid = Grid;
         class Obj extends Countable {
             constructor() {
-                super();
+                super('Obj');
                 this.wpos = [0, 0];
                 this.rpos = [0, 0];
                 this.size = [100, 100];
                 this.rz = 0;
-                Obj.Num++;
             }
             delete() {
                 this.hide();
-                Obj.Num--;
+                this.uncount();
             }
             show() {
                 var _a;
                 if (this.on())
                     return;
                 console.log(' obj show ');
-                Obj.Active++;
                 this.update();
                 (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.show();
             }
@@ -465,7 +479,6 @@ void main() {
                 if (this.off())
                     return;
                 console.log(' obj hide ');
-                Obj.Active--;
                 (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.hide();
             }
             wrpose() {
@@ -500,9 +513,8 @@ void main() {
         Core.Obj = Obj;
         class Drawable extends Countable {
             constructor(x) {
-                super();
+                super('Drawable');
                 this.x = x;
-                Drawable.Num++;
                 x.obj.drawable = this;
             }
             update() {
@@ -511,20 +523,17 @@ void main() {
             }
             delete() {
                 this.hide();
-                Drawable.Num--;
             }
             show() {
                 var _a;
                 if (this.on())
                     return;
-                Drawable.Active++;
                 (_a = this.shape) === null || _a === void 0 ? void 0 : _a.create();
             }
             hide() {
                 var _a;
                 if (this.off())
                     return;
-                Drawable.Active--;
                 (_a = this.shape) === null || _a === void 0 ? void 0 : _a.dispose();
             }
         }
@@ -683,7 +692,7 @@ void main() {
                 this.wpos[1] -= this.float[1];
                 this.rz += this.rate;
                 super.update();
-                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.transfer(this);
+                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
             }
         }
         Rock.slowness = 12;
@@ -786,9 +795,9 @@ void main() {
                 crunch += `mouse pos: ${pts.to_string(App$1.mouse())}<br /><br />`;
                 crunch += `world pos: ${pts.to_string(this.view)}<br />`;
                 //crunch += `world wpos: ${pts.to_string(this.pos)}<br /><br />`;
-                crunch += `sectors: ${Core$1.Sector.Active} / ${Core$1.Sector.Num}<br />`;
-                crunch += `game objs: ${Core$1.Obj.Active} / ${Core$1.Obj.Num}<br />`;
-                crunch += `drawables: ${Core$1.Drawable.Active} / ${Core$1.Drawable.Num}<br />`;
+                crunch += `sectors: ${Countable.Get('Sector').Active} / ${Countable.Get('Sector').Num}<br />`;
+                crunch += `game objs: ${Countable.Get('Obj').Active} / ${Countable.Get('Obj').Num}<br />`;
+                crunch += `drawables: ${Countable.Get('Drawable').Active} / ${Countable.Get('Drawable').Num}<br />`;
                 App$1.sethtml('.stats', crunch);
             }
             start() {

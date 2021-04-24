@@ -6,36 +6,51 @@ import pts from "./Pts";
 import Renderer from "./Renderer";
 
 class Countable {
-	static Num = 0;
-	static Active = 0;
+	static Types: { [name: string]: { Num, Active } } = {};
+	static Get(type: string) {
+		return Countable.Types[type];
+	}
 	protected active = false;
 	isActive() { return this.active };
+	constructor(protected type: string) {
+		if (!Countable.Get(type))
+			Countable.Types[type] = { Num: 1, Active: 0 };
+		else
+			Countable.Get(type).Num++;
+	}
 	protected on() {
 		if (this.active)
 			return true;
+		Countable.Get(this.type).Active++;
 		this.active = true;
 	}
 	protected off() {
 		if (!this.active)
 			return true;
+		Countable.Get(this.type).Active--;
 		this.active = false;
 	}
+	protected uncount() {
+		Countable.Get(this.type).Num--;
+	}
 };
+
+export { Countable };
 
 namespace Core {
 	export class Galaxy {
 		static readonly Unit = 50;
 		static readonly SectorSpan = 10;
 		arrays: Sector[][] = [];
-		readonly center: Center;
+		readonly grid: Grid;
 		constructor(span) {
-			this.center = new Center(this);
+			this.grid = new Grid(3, 4, this);
 		}
 		update(wpos: Vec2) {
 			// lay out sectors in a grid
-			this.center.big = Galaxy.big(wpos);
-			this.center.offs();
-			this.center.crawl();
+			this.grid.big = Galaxy.big(wpos);
+			this.grid.offs();
+			this.grid.crawl();
 		}
 		atnullable(x, y): Sector | undefined {
 			if (this.arrays[y] == undefined)
@@ -73,8 +88,7 @@ namespace Core {
 		readonly big: vec2;
 		private readonly objs: Obj[] = [];
 		constructor(public readonly x, public readonly y, readonly galaxy: Galaxy) {
-			super();
-			Sector.Num++;
+			super('Sector');
 			this.big = [x, y];
 			this.group = new Group;
 			Sector.hooks?.onCreate();
@@ -95,12 +109,15 @@ namespace Core {
 				return !!this.objs.splice(i, 1).length;
 			}
 		}
-		transfer(obj: Obj) {
+		swap(obj: Obj) {
 			let sector = this.galaxy.atwpos(obj.wpos);
 			if (obj.sector != sector) {
 				// console.warn('obj sector not sector');
 				obj.sector?.remove(obj);
 				sector.add(obj);
+				if (!this.galaxy.grid.visible(sector)) {
+					obj.hide();
+				}
 			}
 		}
 		tick() {
@@ -110,7 +127,6 @@ namespace Core {
 		show() {
 			if (this.on())
 				return;
-			Sector.Active++;
 			Util.SectorShow(this);
 			//console.log(' sector show ');
 			for (let obj of this.objs)
@@ -120,7 +136,6 @@ namespace Core {
 		hide() {
 			if (this.off())
 				return;
-			Sector.Active--;
 			Util.SectorHide(this);
 			//console.log(' sector hide ');
 			for (let obj of this.objs)
@@ -129,21 +144,24 @@ namespace Core {
 		}
 		objs_(): ReadonlyArray<Obj> { return this.objs; }
 	}
-	export class Center {
+	export class Grid {
 		big: vec2 = [0, 0];
 		public shown: Sector[] = [];
-		constructor(readonly galaxy: Galaxy) {
+		constructor(public readonly spread, public readonly outside, readonly galaxy: Galaxy) {
+		}
+		visible(sector: Sector) {
+			return pts.dist(sector.big, this.big) < this.spread;
 		}
 		crawl() {
-			const spread = 3; // this is * 2
-			for (let y = -spread; y < spread; y++) {
-				for (let x = -spread; x < spread; x++) {
+			for (let y = -this.spread; y < this.spread; y++) {
+				for (let x = -this.spread; x < this.spread; x++) {
 					let pos = pts.add(this.big, [x, y]);
 					let sector = this.galaxy.atnullable(pos[0], pos[1]);
 					if (!sector)
 						continue;
 					if (!sector.isActive()) {
 						this.shown.push(sector);
+						//console.log('vis test for minted sec ' + this.vis(sector));
 						//console.log(' cull show sector ! ');
 						sector.show();
 					}
@@ -152,13 +170,12 @@ namespace Core {
 
 		}
 		offs() {
-			const outside = 4;
 			let i = this.shown.length;
 			while (i--) {
 				let sector: Sector;
 				sector = this.shown[i];
 				sector.tick();
-				if (pts.dist(sector.big, this.big) > outside) {
+				if (pts.dist(sector.big, this.big) > this.outside) {
 					//console.log(' cull hide sector !');
 					sector.hide();
 					this.shown.splice(i, 1);
@@ -174,18 +191,16 @@ namespace Core {
 		sector: Sector | undefined;
 		rz = 0;
 		constructor() {
-			super();
-			Obj.Num++;
+			super('Obj');
 		}
 		delete() {
 			this.hide();
-			Obj.Num--;
+			this.uncount();
 		}
 		show() {
 			if (this.on())
 				return;
 			console.log(' obj show ');
-			Obj.Active++;
 			this.update();
 			this.drawable?.show();
 
@@ -194,7 +209,6 @@ namespace Core {
 			if (this.off())
 				return;
 			console.log(' obj hide ');
-			Obj.Active--;
 			this.drawable?.hide();
 		}
 		wrpose() {
@@ -227,8 +241,7 @@ namespace Core {
 	export class Drawable extends Countable {
 		shape: Shape | undefined;
 		constructor(public readonly x: { obj: Obj }) {
-			super();
-			Drawable.Num++;
+			super('Drawable');
 			x.obj.drawable = this;
 		}
 		update() {
@@ -236,18 +249,15 @@ namespace Core {
 		}
 		delete() {
 			this.hide();
-			Drawable.Num--;
 		}
 		show() {
 			if (this.on())
 				return;
-			Drawable.Active++;
 			this.shape?.create();
 		}
 		hide() {
 			if (this.off())
 				return;
-			Drawable.Active--;
 			this.shape?.dispose();
 		}
 
@@ -319,7 +329,7 @@ namespace Core {
 			//if (this.y.drawable.x.obj.sector)
 			//	this.y.drawable.x.obj.sector.group.add(this.mesh);
 			//else
-				Renderer.scene.add(this.mesh);
+			Renderer.scene.add(this.mesh);
 		}
 	}
 }

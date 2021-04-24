@@ -59,7 +59,7 @@ var Objects;
             this.wpos[1] -= this.float[1];
             this.rz += this.rate;
             super.update();
-            (_a = this.sector) === null || _a === void 0 ? void 0 : _a.transfer(this);
+            (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
         }
     }
     Rock.slowness = 12;

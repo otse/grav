@@ -3,37 +3,50 @@ import aabb2 from "./Aabb2";
 import pts from "./Pts";
 import Renderer from "./Renderer";
 class Countable {
-    constructor() {
+    constructor(type) {
+        this.type = type;
         this.active = false;
+        if (!Countable.Get(type))
+            Countable.Types[type] = { Num: 1, Active: 0 };
+        else
+            Countable.Get(type).Num++;
+    }
+    static Get(type) {
+        return Countable.Types[type];
     }
     isActive() { return this.active; }
     ;
     on() {
         if (this.active)
             return true;
+        Countable.Get(this.type).Active++;
         this.active = true;
     }
     off() {
         if (!this.active)
             return true;
+        Countable.Get(this.type).Active--;
         this.active = false;
     }
+    uncount() {
+        Countable.Get(this.type).Num--;
+    }
 }
-Countable.Num = 0;
-Countable.Active = 0;
+Countable.Types = {};
 ;
+export { Countable };
 var Core;
 (function (Core) {
     class Galaxy {
         constructor(span) {
             this.arrays = [];
-            this.center = new Center(this);
+            this.grid = new Grid(3, 4, this);
         }
         update(wpos) {
             // lay out sectors in a grid
-            this.center.big = Galaxy.big(wpos);
-            this.center.offs();
-            this.center.crawl();
+            this.grid.big = Galaxy.big(wpos);
+            this.grid.offs();
+            this.grid.crawl();
         }
         atnullable(x, y) {
             if (this.arrays[y] == undefined)
@@ -68,12 +81,11 @@ var Core;
     class Sector extends Countable {
         constructor(x, y, galaxy) {
             var _a;
-            super();
+            super('Sector');
             this.x = x;
             this.y = y;
             this.galaxy = galaxy;
             this.objs = [];
-            Sector.Num++;
             this.big = [x, y];
             this.group = new Group;
             (_a = Sector.hooks) === null || _a === void 0 ? void 0 : _a.onCreate();
@@ -94,13 +106,16 @@ var Core;
                 return !!this.objs.splice(i, 1).length;
             }
         }
-        transfer(obj) {
+        swap(obj) {
             var _a;
             let sector = this.galaxy.atwpos(obj.wpos);
             if (obj.sector != sector) {
                 // console.warn('obj sector not sector');
                 (_a = obj.sector) === null || _a === void 0 ? void 0 : _a.remove(obj);
                 sector.add(obj);
+                if (!this.galaxy.grid.visible(sector)) {
+                    obj.hide();
+                }
             }
         }
         tick() {
@@ -110,7 +125,6 @@ var Core;
         show() {
             if (this.on())
                 return;
-            Sector.Active++;
             Util.SectorShow(this);
             //console.log(' sector show ');
             for (let obj of this.objs)
@@ -120,7 +134,6 @@ var Core;
         hide() {
             if (this.off())
                 return;
-            Sector.Active--;
             Util.SectorHide(this);
             //console.log(' sector hide ');
             for (let obj of this.objs)
@@ -130,22 +143,27 @@ var Core;
         objs_() { return this.objs; }
     }
     Core.Sector = Sector;
-    class Center {
-        constructor(galaxy) {
+    class Grid {
+        constructor(spread, outside, galaxy) {
+            this.spread = spread;
+            this.outside = outside;
             this.galaxy = galaxy;
             this.big = [0, 0];
             this.shown = [];
         }
+        visible(sector) {
+            return pts.dist(sector.big, this.big) < this.spread;
+        }
         crawl() {
-            const spread = 3; // this is * 2
-            for (let y = -spread; y < spread; y++) {
-                for (let x = -spread; x < spread; x++) {
+            for (let y = -this.spread; y < this.spread; y++) {
+                for (let x = -this.spread; x < this.spread; x++) {
                     let pos = pts.add(this.big, [x, y]);
                     let sector = this.galaxy.atnullable(pos[0], pos[1]);
                     if (!sector)
                         continue;
                     if (!sector.isActive()) {
                         this.shown.push(sector);
+                        //console.log('vis test for minted sec ' + this.vis(sector));
                         //console.log(' cull show sector ! ');
                         sector.show();
                     }
@@ -153,13 +171,12 @@ var Core;
             }
         }
         offs() {
-            const outside = 4;
             let i = this.shown.length;
             while (i--) {
                 let sector;
                 sector = this.shown[i];
                 sector.tick();
-                if (pts.dist(sector.big, this.big) > outside) {
+                if (pts.dist(sector.big, this.big) > this.outside) {
                     //console.log(' cull hide sector !');
                     sector.hide();
                     this.shown.splice(i, 1);
@@ -167,26 +184,24 @@ var Core;
             }
         }
     }
-    Core.Center = Center;
+    Core.Grid = Grid;
     class Obj extends Countable {
         constructor() {
-            super();
+            super('Obj');
             this.wpos = [0, 0];
             this.rpos = [0, 0];
             this.size = [100, 100];
             this.rz = 0;
-            Obj.Num++;
         }
         delete() {
             this.hide();
-            Obj.Num--;
+            this.uncount();
         }
         show() {
             var _a;
             if (this.on())
                 return;
             console.log(' obj show ');
-            Obj.Active++;
             this.update();
             (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.show();
         }
@@ -195,7 +210,6 @@ var Core;
             if (this.off())
                 return;
             console.log(' obj hide ');
-            Obj.Active--;
             (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.hide();
         }
         wrpose() {
@@ -230,9 +244,8 @@ var Core;
     Core.Obj = Obj;
     class Drawable extends Countable {
         constructor(x) {
-            super();
+            super('Drawable');
             this.x = x;
-            Drawable.Num++;
             x.obj.drawable = this;
         }
         update() {
@@ -241,20 +254,17 @@ var Core;
         }
         delete() {
             this.hide();
-            Drawable.Num--;
         }
         show() {
             var _a;
             if (this.on())
                 return;
-            Drawable.Active++;
             (_a = this.shape) === null || _a === void 0 ? void 0 : _a.create();
         }
         hide() {
             var _a;
             if (this.off())
                 return;
-            Drawable.Active--;
             (_a = this.shape) === null || _a === void 0 ? void 0 : _a.dispose();
         }
     }

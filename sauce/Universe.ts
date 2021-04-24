@@ -5,7 +5,7 @@ import App from "./App";
 import pts from "./Pts";
 import Renderer from "./Renderer";
 
-import Core from "./Core";
+import Core, { Countable } from "./Core";
 import Objects from "./Objects";
 import Hooks from "./Hooks";
 
@@ -82,9 +82,9 @@ namespace Universe {
 			crunch += `mouse pos: ${pts.to_string(App.mouse())}<br /><br />`;
 			crunch += `world pos: ${pts.to_string(this.view)}<br />`;
 			//crunch += `world wpos: ${pts.to_string(this.pos)}<br /><br />`;
-			crunch += `sectors: ${Core.Sector.Active} / ${Core.Sector.Num}<br />`;
-			crunch += `game objs: ${Core.Obj.Active} / ${Core.Obj.Num}<br />`;
-			crunch += `drawables: ${Core.Drawable.Active} / ${Core.Drawable.Num}<br />`;
+			crunch += `sectors: ${Countable.Get('Sector').Active} / ${Countable.Get('Sector').Num}<br />`;
+			crunch += `game objs: ${Countable.Get('Obj').Active} / ${Countable.Get('Obj').Num}<br />`;
+			crunch += `drawables: ${Countable.Get('Drawable').Active} / ${Countable.Get('Drawable').Num}<br />`;
 			App.sethtml('.stats', crunch);
 		}
 		start() {
