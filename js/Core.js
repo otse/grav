@@ -43,9 +43,9 @@ var Core;
         at(x, y) {
             return this.atnullable(x, y) || this.make(x, y);
         }
-        atw(wpos) {
-            let ig = Galaxy.big(wpos);
-            return this.at(ig[0], ig[1]);
+        atwpos(wpos) {
+            let big = Galaxy.big(wpos);
+            return this.at(big[0], big[1]);
         }
         make(x, y) {
             let s = this.atnullable(x, y);
@@ -69,6 +69,9 @@ var Core;
         constructor(x, y, galaxy) {
             var _a;
             super();
+            this.x = x;
+            this.y = y;
+            this.galaxy = galaxy;
             this.objs = [];
             Sector.Num++;
             this.big = [x, y];
@@ -91,6 +94,15 @@ var Core;
                 return !!this.objs.splice(i, 1).length;
             }
         }
+        transfer(obj) {
+            var _a;
+            let sector = this.galaxy.atwpos(obj.wpos);
+            if (obj.sector != sector) {
+                // console.warn('obj sector not sector');
+                (_a = obj.sector) === null || _a === void 0 ? void 0 : _a.remove(obj);
+                sector.add(obj);
+            }
+        }
         tick() {
             for (let obj of this.objs)
                 obj.tick();
@@ -99,6 +111,8 @@ var Core;
             if (this.on())
                 return;
             Sector.Active++;
+            Util.SectorShow(this);
+            //console.log(' sector show ');
             for (let obj of this.objs)
                 obj.show();
             Renderer.scene.add(this.group);
@@ -107,6 +121,8 @@ var Core;
             if (this.off())
                 return;
             Sector.Active--;
+            Util.SectorHide(this);
+            //console.log(' sector hide ');
             for (let obj of this.objs)
                 obj.hide();
             Renderer.scene.remove(this.group);
@@ -130,7 +146,7 @@ var Core;
                         continue;
                     if (!sector.isActive()) {
                         this.shown.push(sector);
-                        console.log(' show ! ');
+                        //console.log(' cull show sector ! ');
                         sector.show();
                     }
                 }
@@ -144,7 +160,7 @@ var Core;
                 sector = this.shown[i];
                 sector.tick();
                 if (pts.dist(sector.big, this.big) > outside) {
-                    console.log(' hide !');
+                    //console.log(' cull hide sector !');
                     sector.hide();
                     this.shown.splice(i, 1);
                 }
@@ -169,6 +185,7 @@ var Core;
             var _a;
             if (this.on())
                 return;
+            console.log(' obj show ');
             Obj.Active++;
             this.update();
             (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.show();
@@ -177,6 +194,7 @@ var Core;
             var _a;
             if (this.off())
                 return;
+            console.log(' obj hide ');
             Obj.Active--;
             (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.hide();
         }
@@ -203,6 +221,10 @@ var Core;
             var _a;
             if ((_a = this.aabb) === null || _a === void 0 ? void 0 : _a.test(new aabb2(mouse, mouse)))
                 return true;
+        }
+        galaxy() {
+            var _a;
+            return ((_a = this.sector) === null || _a === void 0 ? void 0 : _a.galaxy) || undefined;
         }
     }
     Core.Obj = Obj;
@@ -299,12 +321,37 @@ var Core;
             this.mesh.frustumCulled = false;
             this.mesh.matrixAutoUpdate = false;
             this.update();
-            if (this.y.drawable.x.obj.sector)
-                this.y.drawable.x.obj.sector.group.add(this.mesh);
-            else
-                Renderer.scene.add(this.mesh);
+            //if (this.y.drawable.x.obj.sector)
+            //	this.y.drawable.x.obj.sector.group.add(this.mesh);
+            //else
+            Renderer.scene.add(this.mesh);
         }
     }
     Core.Rectangle = Rectangle;
 })(Core || (Core = {}));
+export var Util;
+(function (Util) {
+    function SectorShow(sector) {
+        let breadth = Core.Galaxy.Unit * Core.Galaxy.SectorSpan;
+        let any = sector;
+        any.geometry = new PlaneBufferGeometry(breadth, breadth, 2, 2);
+        any.material = new MeshBasicMaterial({
+            wireframe: true,
+            transparent: true,
+            color: 'red'
+        });
+        any.mesh = new Mesh(any.geometry, any.material);
+        any.mesh.position.fromArray([sector.x * breadth + breadth / 2, sector.y * breadth + breadth / 2, 0]);
+        any.mesh.updateMatrix();
+        any.mesh.frustumCulled = false;
+        any.mesh.matrixAutoUpdate = false;
+        Renderer.scene.add(any.mesh);
+    }
+    Util.SectorShow = SectorShow;
+    function SectorHide(sector) {
+        let any = sector;
+        Renderer.scene.remove(any.mesh);
+    }
+    Util.SectorHide = SectorHide;
+})(Util || (Util = {}));
 export default Core;

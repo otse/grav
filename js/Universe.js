@@ -4,38 +4,33 @@ import Renderer from "./Renderer";
 import Core from "./Core";
 import Objects from "./Objects";
 import Hooks from "./Hooks";
-var Game;
-(function (Game) {
+var Universe;
+(function (Universe) {
     let globals;
     (function (globals) {
-    })(globals = Game.globals || (Game.globals = {}));
+    })(globals = Universe.globals || (Universe.globals = {}));
     function start() {
-        globals.universe = Game.Universe.make();
-        globals.galaxy = new Core.Galaxy(10);
+        globals.game = Game.make();
         Hooks.start();
     }
-    Game.start = start;
-    class Universe {
+    Universe.start = start;
+    class Game {
         constructor() {
             //objs: Game.Obj[] = [];
             this.view = [0, 0];
             this.pos = [0, 0];
             this.wpos = [0, 0];
             this.mrpos = [0, 0];
+            this.galaxy = new Core.Galaxy(10);
         }
         static make() {
-            return new Universe;
+            return new Game;
         }
         chart(big) {
         }
         add(obj) {
-            let sector = globals.galaxy.atw(obj.wpos);
+            let sector = this.galaxy.atwpos(obj.wpos);
             sector.add(obj);
-        }
-        transfer(obj) {
-            let sector = globals.galaxy.atw(obj.wpos);
-            if (obj.sector != sector)
-                console.warn('obj sector not sector');
         }
         remove(obj) {
             var _a;
@@ -46,7 +41,7 @@ var Game;
             this.mouse();
             this.stats();
             let pos = Core.Galaxy.unproject(this.view);
-            globals.galaxy.update(pos);
+            this.galaxy.update(pos);
         }
         mouse() {
             let mouse = App.mouse();
@@ -98,7 +93,7 @@ var Game;
             this.add(globals.ply);
         }
     }
-    Game.Universe = Universe;
+    Universe.Game = Game;
     let Util;
     (function (Util) {
         function Galx_towpos(s, wpos) {
@@ -110,6 +105,6 @@ var Game;
                     return obj;
         }
         Util.Sector_getobjat = Sector_getobjat;
-    })(Util = Game.Util || (Game.Util = {}));
-})(Game || (Game = {}));
-export default Game;
+    })(Util = Universe.Util || (Universe.Util = {}));
+})(Universe || (Universe = {}));
+export default Universe;

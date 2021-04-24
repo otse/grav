@@ -314,9 +314,9 @@ void main() {
             at(x, y) {
                 return this.atnullable(x, y) || this.make(x, y);
             }
-            atw(wpos) {
-                let ig = Galaxy.big(wpos);
-                return this.at(ig[0], ig[1]);
+            atwpos(wpos) {
+                let big = Galaxy.big(wpos);
+                return this.at(big[0], big[1]);
             }
             make(x, y) {
                 let s = this.atnullable(x, y);
@@ -339,6 +339,9 @@ void main() {
             constructor(x, y, galaxy) {
                 var _a;
                 super();
+                this.x = x;
+                this.y = y;
+                this.galaxy = galaxy;
                 this.objs = [];
                 Sector.Num++;
                 this.big = [x, y];
@@ -361,6 +364,15 @@ void main() {
                     return !!this.objs.splice(i, 1).length;
                 }
             }
+            transfer(obj) {
+                var _a;
+                let sector = this.galaxy.atwpos(obj.wpos);
+                if (obj.sector != sector) {
+                    // console.warn('obj sector not sector');
+                    (_a = obj.sector) === null || _a === void 0 ? void 0 : _a.remove(obj);
+                    sector.add(obj);
+                }
+            }
             tick() {
                 for (let obj of this.objs)
                     obj.tick();
@@ -369,6 +381,8 @@ void main() {
                 if (this.on())
                     return;
                 Sector.Active++;
+                Util.SectorShow(this);
+                //console.log(' sector show ');
                 for (let obj of this.objs)
                     obj.show();
                 Renderer$1.scene.add(this.group);
@@ -377,6 +391,8 @@ void main() {
                 if (this.off())
                     return;
                 Sector.Active--;
+                Util.SectorHide(this);
+                //console.log(' sector hide ');
                 for (let obj of this.objs)
                     obj.hide();
                 Renderer$1.scene.remove(this.group);
@@ -400,7 +416,7 @@ void main() {
                             continue;
                         if (!sector.isActive()) {
                             this.shown.push(sector);
-                            console.log(' show ! ');
+                            //console.log(' cull show sector ! ');
                             sector.show();
                         }
                     }
@@ -414,7 +430,7 @@ void main() {
                     sector = this.shown[i];
                     sector.tick();
                     if (pts.dist(sector.big, this.big) > outside) {
-                        console.log(' hide !');
+                        //console.log(' cull hide sector !');
                         sector.hide();
                         this.shown.splice(i, 1);
                     }
@@ -439,6 +455,7 @@ void main() {
                 var _a;
                 if (this.on())
                     return;
+                console.log(' obj show ');
                 Obj.Active++;
                 this.update();
                 (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.show();
@@ -447,6 +464,7 @@ void main() {
                 var _a;
                 if (this.off())
                     return;
+                console.log(' obj hide ');
                 Obj.Active--;
                 (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.hide();
             }
@@ -473,6 +491,10 @@ void main() {
                 var _a;
                 if ((_a = this.aabb) === null || _a === void 0 ? void 0 : _a.test(new aabb2(mouse, mouse)))
                     return true;
+            }
+            galaxy() {
+                var _a;
+                return ((_a = this.sector) === null || _a === void 0 ? void 0 : _a.galaxy) || undefined;
             }
         }
         Core.Obj = Obj;
@@ -567,14 +589,39 @@ void main() {
                 this.mesh.frustumCulled = false;
                 this.mesh.matrixAutoUpdate = false;
                 this.update();
-                if (this.y.drawable.x.obj.sector)
-                    this.y.drawable.x.obj.sector.group.add(this.mesh);
-                else
-                    Renderer$1.scene.add(this.mesh);
+                //if (this.y.drawable.x.obj.sector)
+                //	this.y.drawable.x.obj.sector.group.add(this.mesh);
+                //else
+                Renderer$1.scene.add(this.mesh);
             }
         }
         Core.Rectangle = Rectangle;
     })(Core || (Core = {}));
+    var Util;
+    (function (Util) {
+        function SectorShow(sector) {
+            let breadth = Core.Galaxy.Unit * Core.Galaxy.SectorSpan;
+            let any = sector;
+            any.geometry = new THREE.PlaneBufferGeometry(breadth, breadth, 2, 2);
+            any.material = new THREE.MeshBasicMaterial({
+                wireframe: true,
+                transparent: true,
+                color: 'red'
+            });
+            any.mesh = new THREE.Mesh(any.geometry, any.material);
+            any.mesh.position.fromArray([sector.x * breadth + breadth / 2, sector.y * breadth + breadth / 2, 0]);
+            any.mesh.updateMatrix();
+            any.mesh.frustumCulled = false;
+            any.mesh.matrixAutoUpdate = false;
+            Renderer$1.scene.add(any.mesh);
+        }
+        Util.SectorShow = SectorShow;
+        function SectorHide(sector) {
+            let any = sector;
+            Renderer$1.scene.remove(any.mesh);
+        }
+        Util.SectorHide = SectorHide;
+    })(Util || (Util = {}));
     var Core$1 = Core;
 
     var Objects;
@@ -619,6 +666,8 @@ void main() {
         class Rock extends Core$1.Obj {
             constructor() {
                 super();
+                this.float = pts.make((Math.random() - 0.5) / Rock.slowness, (Math.random() - 0.5) / Rock.slowness);
+                this.rate = (Math.random() - 0.5) / (Rock.slowness * 6);
             }
             make() {
                 this.size = [200, 200];
@@ -629,10 +678,15 @@ void main() {
                 });
             }
             tick() {
-                this.rz += 0.002;
+                var _a;
+                this.wpos[0] += this.float[0];
+                this.wpos[1] -= this.float[1];
+                this.rz += this.rate;
                 super.update();
+                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.transfer(this);
             }
         }
+        Rock.slowness = 12;
         Objects.Rock = Rock;
     })(Objects || (Objects = {}));
     var Objects$1 = Objects;
@@ -653,32 +707,32 @@ void main() {
     })(Hooks || (Hooks = {}));
     var Hooks$1 = Hooks;
 
-    var Game;
-    (function (Game) {
+    var Universe;
+    (function (Universe) {
         let globals;
         (function (globals) {
-        })(globals = Game.globals || (Game.globals = {}));
+        })(globals = Universe.globals || (Universe.globals = {}));
         function start() {
-            globals.wrld = Game.World.make();
-            globals.galaxy = new Core$1.Galaxy(10);
+            globals.game = Game.make();
             Hooks$1.start();
         }
-        Game.start = start;
-        class World {
+        Universe.start = start;
+        class Game {
             constructor() {
                 //objs: Game.Obj[] = [];
                 this.view = [0, 0];
                 this.pos = [0, 0];
                 this.wpos = [0, 0];
                 this.mrpos = [0, 0];
+                this.galaxy = new Core$1.Galaxy(10);
             }
             static make() {
-                return new World;
+                return new Game;
             }
             chart(big) {
             }
             add(obj) {
-                let sector = globals.galaxy.atw(obj.wpos);
+                let sector = this.galaxy.atwpos(obj.wpos);
                 sector.add(obj);
             }
             remove(obj) {
@@ -690,7 +744,7 @@ void main() {
                 this.mouse();
                 this.stats();
                 let pos = Core$1.Galaxy.unproject(this.view);
-                globals.galaxy.update(pos);
+                this.galaxy.update(pos);
             }
             mouse() {
                 let mouse = App$1.mouse();
@@ -742,7 +796,7 @@ void main() {
                 this.add(globals.ply);
             }
         }
-        Game.World = World;
+        Universe.Game = Game;
         let Util;
         (function (Util) {
             function Galx_towpos(s, wpos) {
@@ -754,9 +808,9 @@ void main() {
                         return obj;
             }
             Util.Sector_getobjat = Sector_getobjat;
-        })(Util = Game.Util || (Game.Util = {}));
-    })(Game || (Game = {}));
-    var Game$1 = Game;
+        })(Util = Universe.Util || (Universe.Util = {}));
+    })(Universe || (Universe = {}));
+    var Universe$1 = Universe;
 
     var TestingChamber;
     (function (TestingChamber) {
@@ -770,7 +824,7 @@ void main() {
                     let square = TestingSquare.make();
                     square.wpos = [x * conversion, y * conversion];
                     square.make();
-                    Game$1.globals.wrld.add(square);
+                    Universe$1.globals.game.add(square);
                 }
             }
         }
@@ -794,7 +848,7 @@ void main() {
             tick() {
                 //super.update();
                 //return;
-                if (this.moused(Game$1.globals.wrld.mrpos)) {
+                if (this.moused(Universe$1.globals.game.mrpos)) {
                     this.shape.material.color.set('green');
                 }
                 else {
@@ -862,7 +916,7 @@ void main() {
         Grav.critical = critical;
         function init() {
             console.log('grav init');
-            Game$1.start();
+            Universe$1.start();
             time = new Date().getTime();
             resourced('RC_UNDEFINED');
             resourced('POPULAR_ASSETS');
@@ -874,7 +928,7 @@ void main() {
             if (started)
                 return;
             console.log('grav starting');
-            Game$1.globals.wrld.start();
+            Universe$1.globals.game.start();
             if (window.location.href.indexOf("#testingchamber") != -1)
                 TestingChamber$1.start();
             if (window.location.href.indexOf("#novar") != -1)
@@ -887,7 +941,7 @@ void main() {
                 reasonable_waiter();
                 return;
             }
-            Game$1.globals.wrld.tick();
+            Universe$1.globals.game.tick();
             //Board.update();
             //Ploppables.update();
         }

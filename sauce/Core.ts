@@ -45,9 +45,9 @@ namespace Core {
 		at(x, y): Sector {
 			return this.atnullable(x, y) || this.make(x, y);
 		}
-		atw(wpos: Vec2): Sector {
-			let ig = Galaxy.big(wpos);
-			return this.at(ig[0], ig[1]);
+		atwpos(wpos: vec2): Sector {
+			let big = Galaxy.big(wpos);
+			return this.at(big[0], big[1]);
 		}
 		protected make(x, y): Sector {
 			let s = this.atnullable(x, y);
@@ -56,10 +56,10 @@ namespace Core {
 			s = this.arrays[y][x] = new Sector(x, y, this);
 			return s;
 		}
-		static big(wpos: Vec2): Vec2 {
+		static big(wpos: vec2): vec2 {
 			return pts.floor(pts.divide(wpos, Galaxy.SectorSpan));
 		}
-		static unproject(pixel: Vec2): Vec2 { // wpos
+		static unproject(pixel: vec2): vec2 { // wpos
 			return pts.divide(pixel, Core.Galaxy.Unit);
 		}
 	}
@@ -70,9 +70,9 @@ namespace Core {
 		static hooks?: SectorHooks | undefined;
 		group: Group;
 		//readonly span = 2000;
-		readonly big: Vec2;
+		readonly big: vec2;
 		private readonly objs: Obj[] = [];
-		constructor(x, y, galaxy) {
+		constructor(public readonly x, public readonly y, readonly galaxy: Galaxy) {
 			super();
 			Sector.Num++;
 			this.big = [x, y];
@@ -95,6 +95,14 @@ namespace Core {
 				return !!this.objs.splice(i, 1).length;
 			}
 		}
+		transfer(obj: Obj) {
+			let sector = this.galaxy.atwpos(obj.wpos);
+			if (obj.sector != sector) {
+				// console.warn('obj sector not sector');
+				obj.sector?.remove(obj);
+				sector.add(obj);
+			}
+		}
 		tick() {
 			for (let obj of this.objs)
 				obj.tick();
@@ -103,6 +111,8 @@ namespace Core {
 			if (this.on())
 				return;
 			Sector.Active++;
+			Util.SectorShow(this);
+			//console.log(' sector show ');
 			for (let obj of this.objs)
 				obj.show();
 			Renderer.scene.add(this.group);
@@ -111,6 +121,8 @@ namespace Core {
 			if (this.off())
 				return;
 			Sector.Active--;
+			Util.SectorHide(this);
+			//console.log(' sector hide ');
 			for (let obj of this.objs)
 				obj.hide();
 			Renderer.scene.remove(this.group);
@@ -118,9 +130,9 @@ namespace Core {
 		objs_(): ReadonlyArray<Obj> { return this.objs; }
 	}
 	export class Center {
-		big: Vec2 = [0, 0];
+		big: vec2 = [0, 0];
 		public shown: Sector[] = [];
-		constructor(private readonly galaxy: Galaxy) {
+		constructor(readonly galaxy: Galaxy) {
 		}
 		crawl() {
 			const spread = 3; // this is * 2
@@ -132,7 +144,7 @@ namespace Core {
 						continue;
 					if (!sector.isActive()) {
 						this.shown.push(sector);
-						console.log(' show ! ');
+						//console.log(' cull show sector ! ');
 						sector.show();
 					}
 				}
@@ -147,7 +159,7 @@ namespace Core {
 				sector = this.shown[i];
 				sector.tick();
 				if (pts.dist(sector.big, this.big) > outside) {
-					console.log(' hide !');
+					//console.log(' cull hide sector !');
 					sector.hide();
 					this.shown.splice(i, 1);
 				}
@@ -155,9 +167,9 @@ namespace Core {
 		}
 	}
 	export class Obj extends Countable {
-		wpos: Vec2 = [0, 0];
-		rpos: Vec2 = [0, 0];
-		size: Vec2 = [100, 100];
+		wpos: vec2 = [0, 0];
+		rpos: vec2 = [0, 0];
+		size: vec2 = [100, 100];
 		drawable: Drawable | undefined;
 		sector: Sector | undefined;
 		rz = 0;
@@ -172,13 +184,16 @@ namespace Core {
 		show() {
 			if (this.on())
 				return;
+			console.log(' obj show ');
 			Obj.Active++;
 			this.update();
 			this.drawable?.show();
+
 		}
 		hide() {
 			if (this.off())
 				return;
+			console.log(' obj hide ');
 			Obj.Active--;
 			this.drawable?.hide();
 		}
@@ -204,6 +219,9 @@ namespace Core {
 		moused(mouse: Vec2) {
 			if (this.aabb?.test(new aabb2(mouse, mouse)))
 				return true;
+		}
+		galaxy(): Galaxy | undefined {
+			return this.sector?.galaxy || undefined;
 		}
 	}
 	export class Drawable extends Countable {
@@ -298,12 +316,34 @@ namespace Core {
 			this.mesh.frustumCulled = false;
 			this.mesh.matrixAutoUpdate = false;
 			this.update();
-			if (this.y.drawable.x.obj.sector)
-				this.y.drawable.x.obj.sector.group.add(this.mesh);
-			else
+			//if (this.y.drawable.x.obj.sector)
+			//	this.y.drawable.x.obj.sector.group.add(this.mesh);
+			//else
 				Renderer.scene.add(this.mesh);
 		}
 	}
 }
 
+export namespace Util {
+	export function SectorShow(sector: Core.Sector) {
+		let breadth = Core.Galaxy.Unit * Core.Galaxy.SectorSpan;
+		let any = sector as any;
+		any.geometry = new PlaneBufferGeometry(breadth, breadth, 2, 2);
+		any.material = new MeshBasicMaterial({
+			wireframe: true,
+			transparent: true,
+			color: 'red'
+		});
+		any.mesh = new Mesh(any.geometry, any.material);
+		any.mesh.position.fromArray([sector.x * breadth + breadth / 2, sector.y * breadth + breadth / 2, 0]);
+		any.mesh.updateMatrix();
+		any.mesh.frustumCulled = false;
+		any.mesh.matrixAutoUpdate = false;
+		Renderer.scene.add(any.mesh);
+	}
+	export function SectorHide(sector: Core.Sector) {
+		let any = sector as any;
+		Renderer.scene.remove(any.mesh);
+	}
+}
 export default Core;

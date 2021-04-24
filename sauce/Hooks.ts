@@ -1,5 +1,5 @@
 import Core from "./Core";
-import Game from "./Game";
+import Universe from "./Universe";
 import Objects from "./Objects";
 
 // high level game happenings

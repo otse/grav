@@ -1,5 +1,5 @@
 import Core from "./Core";
-import Game from "./Game";
+import Universe from "./Universe";
 var TestingChamber;
 (function (TestingChamber) {
     function start() {
@@ -12,7 +12,7 @@ var TestingChamber;
                 let square = TestingSquare.make();
                 square.wpos = [x * conversion, y * conversion];
                 square.make();
-                Game.globals.wrld.add(square);
+                Universe.globals.game.add(square);
             }
         }
     }
@@ -36,7 +36,7 @@ var TestingChamber;
         tick() {
             //super.update();
             //return;
-            if (this.moused(Game.globals.wrld.mrpos)) {
+            if (this.moused(Universe.globals.game.mrpos)) {
                 this.shape.material.color.set('green');
             }
             else {

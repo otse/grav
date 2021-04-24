@@ -9,32 +9,32 @@ import Core from "./Core";
 import Objects from "./Objects";
 import Hooks from "./Hooks";
 
-namespace Game {
+namespace Universe {
 	export namespace globals {
-		export var wrld: World;
+		export var game: Game;
 		export var ply: Objects.Ply;
-		export var galaxy: Core.Galaxy;
 	}
 	export function start() {
-		globals.wrld = Game.World.make();
-		globals.galaxy = new Core.Galaxy(10);
+		globals.game = Game.make();
 		Hooks.start();
 	}
-	export class World {
+	export class Game {
+		galaxy: Core.Galaxy;
 		//objs: Game.Obj[] = [];
-		view: Vec2 = [0, 0];
-		pos: Vec2 = [0, 0];
-		wpos: Vec2 = [0, 0];
-		mrpos: Vec2 = [0, 0];
+		view: vec2 = [0, 0];
+		pos: vec2 = [0, 0];
+		wpos: vec2 = [0, 0];
+		mrpos: vec2 = [0, 0];
 		static make() {
-			return new World;
+			return new Game;
 		}
-		chart(big: Vec2) {
+		chart(big: vec2) {
 		}
 		constructor() {
+			this.galaxy = new Core.Galaxy(10);
 		}
 		add(obj: Core.Obj) {
-			let sector = globals.galaxy.atw(obj.wpos);
+			let sector = this.galaxy.atwpos(obj.wpos);
 			sector.add(obj);
 		}
 		remove(obj: Core.Obj) {
@@ -45,7 +45,7 @@ namespace Game {
 			this.mouse();
 			this.stats();
 			let pos = Core.Galaxy.unproject(this.view);
-			globals.galaxy.update(pos);
+			this.galaxy.update(pos);
 		}
 		mouse() {
 			let mouse = App.mouse();
@@ -94,10 +94,10 @@ namespace Game {
 	}
 	
 	export namespace Util {
-		export function Galx_towpos(s: Core.Sector, wpos: Vec2) {
+		export function Galx_towpos(s: Core.Sector, wpos: vec2) {
 		}
 
-		export function Sector_getobjat(s: Core.Sector, wpos: Vec2) {
+		export function Sector_getobjat(s: Core.Sector, wpos: vec2) {
 			for (let obj of s.objs_())
 				if (pts.equals(obj.wpos, wpos))
 					return obj;
@@ -105,4 +105,4 @@ namespace Game {
 	}
 }
 
-export default Game;
+export default Universe;
