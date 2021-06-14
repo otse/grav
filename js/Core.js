@@ -2,10 +2,27 @@ import { Mesh, PlaneBufferGeometry, MeshBasicMaterial, Group } from "three";
 import aabb2 from "./Aabb2";
 import pts from "./Pts";
 import Renderer from "./Renderer";
-class Countable {
-    constructor(type) {
-        this.type = type;
+class Toggleable {
+    constructor() {
         this.active = false;
+    }
+    isActive() { return this.active; }
+    ;
+    on() {
+        if (this.active)
+            return true;
+        this.active = true;
+    }
+    off() {
+        if (!this.active)
+            return true;
+        this.active = false;
+    }
+}
+class Countable extends Toggleable {
+    constructor(type) {
+        super();
+        this.type = type;
         if (!Countable.Get(type))
             Countable.Types[type] = { Num: 1, Active: 0 };
         else
@@ -14,19 +31,15 @@ class Countable {
     static Get(type) {
         return Countable.Types[type];
     }
-    isActive() { return this.active; }
-    ;
     on() {
-        if (this.active)
+        if (super.on())
             return true;
         Countable.Get(this.type).Active++;
-        this.active = true;
     }
     off() {
-        if (!this.active)
+        if (super.off())
             return true;
         Countable.Get(this.type).Active--;
-        this.active = false;
     }
     uncount() {
         Countable.Get(this.type).Num--;
@@ -48,20 +61,20 @@ var Core;
             this.grid.offs();
             this.grid.crawl();
         }
-        atnullable(x, y) {
+        lookup(x, y) {
             if (this.arrays[y] == undefined)
                 this.arrays[y] = [];
             return this.arrays[y][x];
         }
         at(x, y) {
-            return this.atnullable(x, y) || this.make(x, y);
+            return this.lookup(x, y) || this.make(x, y);
         }
         atwpos(wpos) {
             let big = Galaxy.big(wpos);
             return this.at(big[0], big[1]);
         }
         make(x, y) {
-            let s = this.atnullable(x, y);
+            let s = this.lookup(x, y);
             if (s)
                 return s;
             s = this.arrays[y][x] = new Sector(x, y, this);
@@ -119,8 +132,8 @@ var Core;
             }
         }
         tick() {
-            for (let obj of this.objs)
-                obj.tick();
+            //for (let obj of this.objs)
+            //	obj.tick();
         }
         show() {
             if (this.on())
@@ -158,30 +171,31 @@ var Core;
             for (let y = -this.spread; y < this.spread; y++) {
                 for (let x = -this.spread; x < this.spread; x++) {
                     let pos = pts.add(this.big, [x, y]);
-                    let sector = this.galaxy.atnullable(pos[0], pos[1]);
+                    let sector = this.galaxy.lookup(pos[0], pos[1]);
                     if (!sector)
                         continue;
                     if (!sector.isActive()) {
                         this.shown.push(sector);
-                        //console.log('vis test for minted sec ' + this.vis(sector));
-                        //console.log(' cull show sector ! ');
                         sector.show();
                     }
                 }
             }
         }
         offs() {
+            let allObjs = [];
             let i = this.shown.length;
             while (i--) {
                 let sector;
                 sector = this.shown[i];
+                allObjs = allObjs.concat(sector.objs_());
                 sector.tick();
                 if (pts.dist(sector.big, this.big) > this.outside) {
-                    //console.log(' cull hide sector !');
                     sector.hide();
                     this.shown.splice(i, 1);
                 }
             }
+            for (let obj of allObjs)
+                obj.tick();
         }
     }
     Core.Grid = Grid;
@@ -201,7 +215,7 @@ var Core;
             var _a;
             if (this.on())
                 return;
-            console.log(' obj show ');
+            // console.log(' obj show ');
             this.update();
             (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.show();
         }
@@ -209,7 +223,7 @@ var Core;
             var _a;
             if (this.off())
                 return;
-            console.log(' obj hide ');
+            // console.log(' obj hide ');
             (_a = this.drawable) === null || _a === void 0 ? void 0 : _a.hide();
         }
         wrpose() {

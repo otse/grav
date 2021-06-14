@@ -5,30 +5,41 @@ import Grav from "./Grav";
 import pts from "./Pts";
 import Renderer from "./Renderer";
 
-class Countable {
+class Toggleable {
+	protected active = false;
+	isActive() { return this.active };
+	protected on() {
+		if (this.active)
+			return true;
+		this.active = true;
+	}
+	protected off() {
+		if (!this.active)
+			return true;
+		this.active = false;
+	}
+}
+class Countable extends Toggleable {
 	static Types: { [name: string]: { Num, Active } } = {};
 	static Get(type: string) {
 		return Countable.Types[type];
 	}
-	protected active = false;
-	isActive() { return this.active };
 	constructor(protected type: string) {
+		super();
 		if (!Countable.Get(type))
 			Countable.Types[type] = { Num: 1, Active: 0 };
 		else
 			Countable.Get(type).Num++;
 	}
 	protected on() {
-		if (this.active)
+		if (super.on())
 			return true;
 		Countable.Get(this.type).Active++;
-		this.active = true;
 	}
 	protected off() {
-		if (!this.active)
+		if (super.off())
 			return true;
 		Countable.Get(this.type).Active--;
-		this.active = false;
 	}
 	protected uncount() {
 		Countable.Get(this.type).Num--;
@@ -52,20 +63,20 @@ namespace Core {
 			this.grid.offs();
 			this.grid.crawl();
 		}
-		atnullable(x, y): Sector | undefined {
+		lookup(x, y): Sector | undefined {
 			if (this.arrays[y] == undefined)
 				this.arrays[y] = [];
 			return this.arrays[y][x];
 		}
 		at(x, y): Sector {
-			return this.atnullable(x, y) || this.make(x, y);
+			return this.lookup(x, y) || this.make(x, y);
 		}
 		atwpos(wpos: vec2): Sector {
 			let big = Galaxy.big(wpos);
 			return this.at(big[0], big[1]);
 		}
 		protected make(x, y): Sector {
-			let s = this.atnullable(x, y);
+			let s = this.lookup(x, y);
 			if (s)
 				return s;
 			s = this.arrays[y][x] = new Sector(x, y, this);
@@ -121,8 +132,8 @@ namespace Core {
 			}
 		}
 		tick() {
-			for (let obj of this.objs)
-				obj.tick();
+			//for (let obj of this.objs)
+			//	obj.tick();
 		}
 		show() {
 			if (this.on())
@@ -147,7 +158,10 @@ namespace Core {
 	export class Grid {
 		big: vec2 = [0, 0];
 		public shown: Sector[] = [];
-		constructor(public readonly spread, public readonly outside, readonly galaxy: Galaxy) {
+		constructor(
+			public readonly spread,
+			public readonly outside,
+			readonly galaxy: Galaxy) {
 		}
 		visible(sector: Sector) {
 			return pts.dist(sector.big, this.big) < this.spread;
@@ -156,13 +170,11 @@ namespace Core {
 			for (let y = -this.spread; y < this.spread; y++) {
 				for (let x = -this.spread; x < this.spread; x++) {
 					let pos = pts.add(this.big, [x, y]);
-					let sector = this.galaxy.atnullable(pos[0], pos[1]);
+					let sector = this.galaxy.lookup(pos[0], pos[1]);
 					if (!sector)
 						continue;
 					if (!sector.isActive()) {
 						this.shown.push(sector);
-						//console.log('vis test for minted sec ' + this.vis(sector));
-						//console.log(' cull show sector ! ');
 						sector.show();
 					}
 				}
@@ -170,17 +182,20 @@ namespace Core {
 
 		}
 		offs() {
+			let allObjs: Obj[] = [];
 			let i = this.shown.length;
 			while (i--) {
 				let sector: Sector;
 				sector = this.shown[i];
+				allObjs = allObjs.concat(sector.objs_());
 				sector.tick();
 				if (pts.dist(sector.big, this.big) > this.outside) {
-					//console.log(' cull hide sector !');
 					sector.hide();
 					this.shown.splice(i, 1);
 				}
 			}
+			for (let obj of allObjs)
+				obj.tick();
 		}
 	}
 	export class Obj extends Countable {
@@ -200,7 +215,7 @@ namespace Core {
 		show() {
 			if (this.on())
 				return;
-			console.log(' obj show ');
+			// console.log(' obj show ');
 			this.update();
 			this.drawable?.show();
 
@@ -208,7 +223,7 @@ namespace Core {
 		hide() {
 			if (this.off())
 				return;
-			console.log(' obj hide ');
+			// console.log(' obj hide ');
 			this.drawable?.hide();
 		}
 		wrpose() {
